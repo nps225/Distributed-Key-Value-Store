@@ -1,0 +1,70 @@
+
+#########View Change request#######
+
+curl --request PUT \
+--header "Content-Type: application/json" \
+--write-out "%{http_code}\n" \
+--data '{"view":"10.10.0.2:13800,10.10.0.3:13800}' \
+        http://localhost:13802/kv-store/view-change
+
+
+
+#############Put Requests#############
+
+curl --request PUT \
+--header "Content-Type: application/json" \
+--write-out "%{http_code}\n" \
+--data '{"value": "sampleValue"}' \
+http://127.0.0.1:13801/kv-store/sampleKey
+
+
+curl --request PUT \
+--header "Content-Type: application/json" \
+--write-out "%{http_code}\n" \
+--data '{}' \
+http://127.0.0.1:13802/kv-store/sampleKey
+
+
+
+curl --request PUT \
+--header "Content-Type: application/json" \
+--write-out "%{http_code}\n" \
+--data '{"value": "sampleValue"}' \
+http://127.0.0.1:13800/kv-store/6TLxbmwMTN4hX7L0QX5NflWH0QKfrTlzcuM5PUQHS52lCizKbEM
+
+
+############Update Keys##############
+
+To update an existing key named sampleKey, send a PUT request to /kv-store/sampleKey.
+The key-value store should respond with status code 200 and JSON: {"message":"Updated
+successfully","replaced":true}
+$ curl --request PUT \
+--header "Content-Type: application/json" \
+--write-out "%{http_code}\n" \
+--data '{"value": "updatedValue"}' \
+http://127.0.0.1:13800/kv-store/sampleKey
+
+{"message":"Updated successfully","replaced":true}
+200
+• If no updated value is provided for the key, the key-value store should respond with status code 400
+and JSON: {"error":"Value is missing","message":"Error in PUT"}
+$ curl --request PUT \
+--header "Content-Type: application/json" \
+--write-out "%{http_code}\n" \
+--data '{}' \
+http://127.0.0.1:13800/kv-store/sampleKey
+
+{"error":"Value is missing","message":"Error in PUT"}
+400
+
+
+
+#######Get Resquests####
+
+curl --request PUT \
+--header "Content-Type: application/json" \
+--write-out "%{http_code}\n" \
+--data '{"value": "sampleValue"}' \
+http://127.0.0.1:13800/kv-store/sampleKey
+{"message":"Added successfully","replaced":false}
+201
