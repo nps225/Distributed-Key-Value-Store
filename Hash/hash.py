@@ -12,6 +12,7 @@ class Hash:
       view = os.getenv("VIEW").split(",")
       #obtain our nodes address
       address = os.getenv("ADDRESS")
+      replication = int(os.getenv("REPL_FACTOR"))#gets the number of replicas that are present
       
       #obtain our shard - we get a check of a new hash everytime by getting the
       # value and the hashing it, then divide by the current view length
@@ -19,17 +20,14 @@ class Hash:
       # only reshards when we have a viewChange with the modulo
       val_ascii = sum([ord(c) for c in key])
       # shard = (val_ascii).encode().hex() % (len(view))
-      shard = (val_ascii) % (len(view))
+      #we are going to check
+      shard = int((val_ascii) % (len(view)/replication))
+      addresses = []
+      for i in range(replication):
+         addresses.append(view[shard * replication + i].replace("\"",""))
+   
+      return addresses
       
-      
-      # this is where we get the address of direction below
-      #now compare the current address with the address at location in list
-      shard_address = view[shard].replace("\"","")#!!!!! may need to remove in actual testing
-      #if the address is the same as our shard address
-      if(address == shard_address):
-         return (True,address)
-      else:#if not forward to the desired address
-         return (False,shard_address)
 
    # increasing the count of shards/the items that go into the nodes
    def incCount(self):
