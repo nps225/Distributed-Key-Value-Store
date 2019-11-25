@@ -6,6 +6,7 @@ class Store:
    def __init__(self):
       #first we need to initialize our dictionary
       self.dict = {}
+      self.clock = {}
 
 
    #INSERT
@@ -19,6 +20,11 @@ class Store:
       #place the value/new value
       self.dict[key] = value
       return exists
+   
+   #Grabs the vector clock
+   def upsertVC(self,key,clock):
+      self.clock[key] = clock
+      return clock
    
    
    #GET
@@ -42,6 +48,10 @@ class Store:
          value = "Key does not exist"
       
       return (exists,value,code)
+   
+   #Get the clock value
+   def getClock(self,key):
+      return self.clock[key]
 
    #DELETE
    #returns a boolean -- true if exists -- false if not
@@ -59,4 +69,10 @@ class Store:
       for key in self.dict.keys():
          l.append((key,self.dict[key]))
       return l
+
+   def returnClock(self):
+     l = []
+     for key in self.clock.keys():
+        l.append((key,self.clock[key]))
+     return l 
 
