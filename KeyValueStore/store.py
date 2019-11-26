@@ -79,3 +79,7 @@ class Store:
 
    def returnTables(self):
       return (self.returnStore(),self.returnClock())
+
+
+   def returnTablesDict(self):
+      return (self.dict,self.clock)

@@ -142,7 +142,7 @@ def keyCount():
 #Key-Count
 @app.route('/kv-store/table', methods=['GET'])
 def getStore():
-    values,vectors = store.returnTables()
+    values,vectors = store.returnTablesDict()
     temp = {
         "message": "Key count retrieved successfully",
         "values":values,
