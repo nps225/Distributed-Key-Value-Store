@@ -19,12 +19,12 @@ nohup docker run --name="node1"        --net=kv_subnet     \
            --ip=10.10.0.2        -p 13802:13800      \
            -e ADDRESS="${addr1}"                     \
            -e VIEW=${initial_full_view}              \
-           -e REPL_FACTOR="1"                        \
+           -e REPL_FACTOR="2"                        \
            kv-store:3.0 &
 
 docker run --name="node2"        --net=kv_subnet     \
            --ip=10.10.0.3        -p 13803:13800      \
            -e ADDRESS="${addr2}"                     \
            -e VIEW=${initial_full_view}              \
-           -e REPL_FACTOR="1"                        \
+           -e REPL_FACTOR="2"                        \
            kv-store:3.0 &

@@ -76,3 +76,6 @@ class Store:
         l.append((key,self.clock[key]))
      return l 
 
+
+   def returnTables(self):
+      return (self.returnStore(),self.returnClock())

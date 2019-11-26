@@ -5,6 +5,7 @@ class Hash:
    # (ascii value) % n (where n is the number of computers)
    def __init__(self):
       self.count = 0
+      self.shard_id = str(int((os.getenv("VIEW").replace("\"","").split(",").index(os.getenv("ADDRESS")))/int(os.getenv("REPL_FACTOR"))))
    
    # check the hash if its in use
    def checkHash(self,key):

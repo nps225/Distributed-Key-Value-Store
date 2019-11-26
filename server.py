@@ -129,8 +129,6 @@ def getKey(key):
                 address = y
             ), 503
 
-
-
 #Key-Count
 @app.route('/kv-store/key-count', methods=['GET'])
 def keyCount():
@@ -138,6 +136,17 @@ def keyCount():
     temp = {
         "message": "Key count retrieved successfully",
         "key-count":count
+        }
+    return make_response(temp),200
+
+#Key-Count
+@app.route('/kv-store/table', methods=['GET'])
+def getStore():
+    values,vectors = store.returnTables()
+    temp = {
+        "message": "Key count retrieved successfully",
+        "values":values,
+        "vectors":vectors
         }
     return make_response(temp),200
 
