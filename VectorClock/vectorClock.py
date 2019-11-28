@@ -48,11 +48,19 @@ class VectorClock:
         else:
             return 'Not allowed'
 #for recieve, self is the recieving node and vClck is the one that did the send!
+#if vc is same during gossip, compare the timestamps and set vc as so
     def compClock(self, vClck):
         clock0 = self.getClock()
         clock1 = vClck.getClock()
-        for i in range(len(clock0)):
-            clock0[i] = max(clock0[i], clock1[i])
+        if clock1 != clock0:
+            for i in range(len(clock0)):
+                clock0[i] = max(clock0[i], clock1[i])
+        else:
+            stamp0 = self.getTimeStamp()
+            stamp1 = vClck.getTimeStamp()
+            if stamp0 < stamp1:
+                clock0 = clock1
+
         
         vClck.clock = clock0
 
