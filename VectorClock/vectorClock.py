@@ -40,21 +40,22 @@ class VectorClock:
     def getTimeStamp(self):
         return self.timeStamp
 
-
-    def incSelfClock(self, i):
+#for doing a send/recieve
+    def incClock(self, i):
         if i < len(self.view):
             self.clock[i]+=1
             self.timeStamp = datetime.timestamp(datetime.now())
         else:
             return 'Not allowed'
-
-    def incClock(self, vClck, i):
+#for recieve, self is the recieving node and vClck is the one that did the send!
+    def compClock(self, vClck):
         clock0 = self.getClock()
         clock1 = vClck.getClock()
         for i in range(len(clock0)):
-            if clock0[i] == clock1[i]:
-                clock1[i]+=1
-                
+            clock0[i] = max(clock0[i], clock1[i])
+        
+        vClck.clock = clock0
+
 
 
 

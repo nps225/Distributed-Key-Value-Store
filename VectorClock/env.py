@@ -15,9 +15,18 @@ v.updateClock(newView)
 print(v.getClock())
 print(v.getView())
 
-v.incSelfClock(2)
+v.incClock(1)
+v.incClock(2)
 
 print(v.getClock())
+os.environ["VIEW"] = newView
+
+v2 = VectorClock()
+# print(v2.getClock())
+v2.incClock(2)
+print(v2.getClock())
+v2.compClock(v)
+print(v2.getClock())
 
 
 
