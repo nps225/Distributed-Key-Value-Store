@@ -62,7 +62,7 @@ class VectorClock:
                 clock0 = clock1
 
         
-        vClck.clock = clock0
+        self.clock = clock0
 
 
 
