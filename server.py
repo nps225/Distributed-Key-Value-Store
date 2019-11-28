@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, redirect,make_response
+import logging
 import requests
 from KeyValueStore.store import Store
 from Hash.hash import Hash
@@ -29,7 +30,7 @@ view = os.getenv("VIEW").split(",")
 address = os.getenv("ADDRESS")
 #hash handles view + count + hashing algorithm
 h = Hash()# you can check which shard you are in + it will return you a forwarding address if needed
-
+timmmme = 0
 #UPSERT
 @app.route('/kv-store/keys/<key>', methods=['PUT'])
 def upsertKey(key):
@@ -139,19 +140,33 @@ def keyCount():
         }
     return make_response(temp),200
 
-#Key-Count
+#return entire store
 @app.route('/kv-store/table', methods=['GET'])
 def getStore():
     values,vectors = store.returnTablesDict()
     temp = {
         "message": "Key count retrieved successfully",
         "values":values,
-        "vectors":vectors
+        "vectors":vectors,
+        "time":timmmme
         }
     return make_response(temp),200
 
+
+
+
 #gossip protocol
-#  
+#
+
+def gossip():
+    #I want to gossip every second to ensure I have the latest data
+    while True:
+        #first we must send a request that obtains the entire table from various nodes
+        shard = h.getShard()
+        for i in shard:
+            app.logger.info(str(i))
+
+        time.sleep(1)
 
 #HELPER FUNCTIONS
 def formatResult(result):
@@ -171,6 +186,8 @@ def formatResult(result):
 if __name__ == '__main__':
     num_keys = 0 #number of keys in our key-value store
     #app.config['JSON_SORT_KEYS'] = False
+    #gossip()
     app.run(debug=True, threaded=True, host='0.0.0.0', port=13800)
+    gossip()
 # why 0.0.0.0?? https://stackoverflow.com/questions/20778771/what-is-the-difference-between-0-0-0-0-127-0-0-1-and-localhost
 # it basically checks if there is anything being point to the network for the local IP

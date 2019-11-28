@@ -28,6 +28,14 @@ class Hash:
          addresses.append(view[shard * replication + i].replace("\"",""))
    
       return addresses
+   
+   def getShard(self):
+     f = int(self.shard_id)
+     rep = int(os.getenv("REPL_FACTOR"))
+     index = f * rep
+     shard = os.getenv("VIEW").replace("\"","").split(",")[index:index+rep]
+     return shard
+
       
 
    # increasing the count of shards/the items that go into the nodes
