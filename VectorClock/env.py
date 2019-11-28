@@ -15,7 +15,7 @@ v.updateClock(newView)
 print(v.getClock())
 print(v.getView())
 
-v.incClock(2)
+v.incSelfClock(2)
 
 print(v.getClock())
 
