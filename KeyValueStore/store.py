@@ -84,7 +84,7 @@ class Store:
    def returnTablesDict(self):
       return (self.dict,self.clock)
 
-   def compare(self,store,clock):
+   def comparison(self,store,clock):
       if(self.dict == store): #later make it so you check if the clock is the same as well
          return True#means we are up to date
       else:#not up to date

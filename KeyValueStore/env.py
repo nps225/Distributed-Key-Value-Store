@@ -23,7 +23,7 @@ compare = {
 
 c,b = test.returnTablesDict()
 print(test.dict)
-print(test.compare(compare,{}))
+print(test.comparison(compare,{}))
 print(test.dict)
 # print(c == compare)
 

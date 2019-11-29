@@ -5,6 +5,7 @@ from KeyValueStore.store import Store
 from Hash.hash import Hash
 import json
 import time
+import threading
 # from os import environ
 import os
 app = Flask(__name__)
@@ -147,8 +148,7 @@ def getStore():
     temp = {
         "message": "Key count retrieved successfully",
         "values":values,
-        "vectors":vectors,
-        "time":timmmme
+        "vectors":vectors
         }
     return make_response(temp),200
 
@@ -157,14 +157,30 @@ def getStore():
 
 #gossip protocol
 #
-
 def gossip():
     #I want to gossip every second to ensure I have the latest data
+    
     while True:
         #first we must send a request that obtains the entire table from various nodes
+        global store
         shard = h.getShard()
         for i in shard:
-            app.logger.info(str(i))
+            if i != address:
+                try:
+                    # print(i)
+                    url = 'http://' + i + '/kv-store/table'
+                    temp = (formatResult(requests.get(url,timeout=2, headers={
+                    'Content-Type': 'application/json'})))
+                    res,b = temp
+                    print(res["values"],flush=True)
+                    store.comparison(res["values"],res["vectors"])
+                    # res, b = temp
+                except:
+                    print("something bad happened and weeeee don't care!!!")
+                    pass
+                    
+        # for i in shard:
+        #     app.logger.info(str(i))
 
         time.sleep(1)
 
@@ -174,7 +190,7 @@ def formatResult(result):
     result = result.json()
 
     if result != None:
-        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards"]
+        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors"]
         result = {k: result[k] for k in jsonKeys if k in result}
 
     else:
@@ -183,11 +199,12 @@ def formatResult(result):
 
     return result, status_code
 
+
 if __name__ == '__main__':
     num_keys = 0 #number of keys in our key-value store
     #app.config['JSON_SORT_KEYS'] = False
-    #gossip()
+    threading = threading.Thread(target=gossip)
+    threading.start()
     app.run(debug=True, threaded=True, host='0.0.0.0', port=13800)
-    gossip()
 # why 0.0.0.0?? https://stackoverflow.com/questions/20778771/what-is-the-difference-between-0-0-0-0-127-0-0-1-and-localhost
 # it basically checks if there is anything being point to the network for the local IP
