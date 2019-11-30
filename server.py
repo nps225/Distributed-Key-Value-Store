@@ -3,6 +3,7 @@ import logging
 import requests
 from KeyValueStore.store import Store
 from Hash.hash import Hash
+from VectorClock.vectorClock import VectorClock
 import json
 import time
 import threading
@@ -31,6 +32,7 @@ view = os.getenv("VIEW").split(",")
 address = os.getenv("ADDRESS")
 #hash handles view + count + hashing algorithm
 h = Hash()# you can check which shard you are in + it will return you a forwarding address if needed
+v = VectorClock()
 timmmme = 0
 #UPSERT
 @app.route('/kv-store/keys/<key>', methods=['PUT'])
@@ -144,12 +146,23 @@ def keyCount():
 #return entire store
 @app.route('/kv-store/table', methods=['GET'])
 def getStore():
-    values,vectors = store.returnTablesDict()
-    temp = {
-        "message": "Key count retrieved successfully",
-        "values":values,
-        "vectors":vectors
-        }
+    temp = store
+    # values,vectors = store.returnTablesDict()
+    # temp = {
+    #     "message": "Key count retrieved successfully",
+    #     "values":values,
+    #     "vectors":vectors
+    #     }
+    return make_response(temp),200
+@app.route('/kv-store/time', methods=['GET'])
+def getStore():
+    temp = v
+    # values,vectors = store.returnTablesDict()
+    # temp = {
+    #     "message": "Key count retrieved successfully",
+    #     "values":values,
+    #     "vectors":vectors
+    #     }
     return make_response(temp),200
 
 
@@ -171,9 +184,13 @@ def gossip():
                     url = 'http://' + i + '/kv-store/table'
                     temp = (formatResult(requests.get(url,timeout=2, headers={
                     'Content-Type': 'application/json'})))
-                    res,b = temp
-                    print(res["values"],flush=True)
-                    store.comparison(res["values"],res["vectors"])
+                    sto,b = temp
+                    url = 'http://' + i + '/kv-store/time'
+                    temp1 = (formatResult(requests.get(url,timeout=2, headers={
+                    'Content-Type': 'application/json'})))
+                    storeT,b = temp1
+                    print(type(sto),flush=True)
+                    store.comparison(sto, v, storeT, address, i)
                     # res, b = temp
                 except:
                     print("something bad happened and weeeee don't care!!!")
