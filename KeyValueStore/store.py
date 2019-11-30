@@ -92,5 +92,17 @@ class Store:
          keys = store.keys()
          for i in keys:
             if(self.dict.get(i) != store.get(i)):
+               #update vector clock?
                self.dict[i] = store[i]
+            elif self.dict.get(i) == store.get(i):
+               selfClock = self.getClock(i)
+               storeClock = store.getClock(i)
+               sum1 = sum(selfClock)
+               sum2 = sum(storeClock)
+               if sum1 > sum2:
+                  print('store outdated')
+               elif sum1 < sum2:
+                  print('self outdated')
+               else:
+                  print('uh oh timestamp time')
          return False

@@ -66,21 +66,26 @@ class VectorClock:
         self.clock = clock0
 
         
-    #self being node on the recieving end of gossip, vClck for sending node of gossip, st1 for receiving and st2 for sending
-    def gossipClock(self, vClck, st1, st2):
-        clock0 = self.getClock()
-        clock1 = vClck.getClock()
-        if clock0 != clock1:
-            print('yeet')
+    # #self being node on the recieving end of gossip, vClck for sending node of gossip, st1 for receiving and st2 for sending
+    # def gossipClock(self, vClck, st1, st2):
+    #     #1. if store is same as current dict (nuse Nikhils function in store)
+    #     #2. iterate through every single key of the reciving node of the gossip
+    #         #2a. check if key is in both and then check if vc is the same, if same then continue check
+    #         #2b. check if non existent key, add it to our keystore
+    #     #3. if it passed through 2 without doing shit, then check timestamps
 
-        else:
-            stamp0 = self.getTimeStamp()
-            stamp1 = vClck.getTimeStamp()
-            if stamp0 < stamp1:
-                clock0 = clock1
+    #     if st1.comparison 
+    #     if clock0 != clock1:
+    #         print('yeet')
+
+    #     else:
+    #         stamp0 = self.getTimeStamp()
+    #         stamp1 = vClck.getTimeStamp()
+    #         if stamp0 < stamp1:
+    #             clock0 = clock1
 
         
-        self.clock = clock0
+    #     self.clock = clock0
 
 
 

@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify, redirect,make_response
+import logging
 import requests
 from KeyValueStore.store import Store
 from Hash.hash import Hash
 import json
 import time
+import threading
 # from os import environ
 import os
 app = Flask(__name__)
@@ -29,7 +31,8 @@ view = os.getenv("VIEW").split(",")
 address = os.getenv("ADDRESS")
 #hash handles view + count + hashing algorithm
 h = Hash()# you can check which shard you are in + it will return you a forwarding address if needed
-
+timmmme = 0
+#UPSERT
 @app.route('/kv-store/keys/<key>', methods=['PUT'])
 def upsertKey(key):
     #first step is to check if we need to forward our address
@@ -49,24 +52,30 @@ def upsertKey(key):
         # make the request to the key value store
         # key
         #if the key is put in our key-value store
-        x,y = h.checkHash(key)
-        if(x):
+        addresses = h.checkHash(key)
+        #handle the insert here
+        if address in addresses:#if it is at this address
+
             value = data["value"]  # value
             res = store.upsertValue(key, value)
             if(not res):
                 h.incCount()
-                return jsonify(
+                response = jsonify(
                     message='Added successfully',
                     replaced=res
                 ), 201
 
             if(res):
-                return jsonify(
+                response = jsonify(
                     message="Updated successfully",
                     replaced=res
                 ), 200
-        else:#we need to forward this request
-            #we need to go to this shard
+            #gossip here
+            #gossipPUT(addresses,key,data)
+            return response
+        else:
+            #we need to handle if we get a 503 here then we move onto the next request for replica
+            y = addresses[0]
             url = 'http://' + y + '/kv-store/keys/' + key
             try:
                 temp = (formatResult(requests.put(url,timeout=5, headers={
@@ -84,17 +93,13 @@ def upsertKey(key):
                     message="Error in PUT",
                     address = y
                 ), 503
-        #if not handle forwarding below here
 
 # GET KEY IMPLEMENTATION
 @app.route('/kv-store/keys/<key>', methods=['GET'])
 def getKey(key):
-    x, y = h.checkHash(key)    
-
-    #key is in this node
-    if(x): 
+    addresses = h.checkHash(key)
+    if address in addresses:
         exists, val, code = store.getValue(key)
-
         if(exists):
             return jsonify(
                 doesExist=exists,
@@ -108,11 +113,12 @@ def getKey(key):
                 message=val
             ), code
     else:
+        #handle if a node is down
         #this means we need to forward our request
+        y = addresses[0]
         url = 'http://' + y + '/kv-store/keys/' + key
         # now let's grab make our request
         try:
-
             temp = (formatResult(requests.get(url= url,timeout=5, headers={
                 'Content-Type': 'application/json'})))
             a,b = temp
@@ -125,48 +131,7 @@ def getKey(key):
                 address = y
             ), 503
 
-        
-
-# DELETE KEY IMPLEMENTATION
-@app.route('/kv-store/keys/<key>', methods=['DELETE'])
-def deleteKey(key):
-    # need condition here to see if value in storage already exists
-    x, y = h.checkHash(key)
-
-    #if the key is in this shard
-    if(x):
-        res = store.deleteValue(key)
-
-        if(res):
-            h.decCount()
-            return jsonify(
-                doesExist=res,
-                message="Deleted successfully"
-            ), 200
-
-        if(not res):
-            return jsonify(
-                doesExist=res,
-                error="Key does not exist",
-                message="Error in DELETE"
-            ), 404
-    else:
-        url = 'http://' + y + '/kv-store/keys/' + key
-        try:
-            a,b = (formatResult(requests.delete(url, timeout=5,headers={
-                'Content-Type': 'application/json'})))
-            a["address"] = y
-            return a,b
-
-        except:  # return that main is down
-            # print(e)
-            return jsonify(
-                error="Main instance is down",
-                message="Error in DELETE",
-                address=y
-            ), 503
-
-
+#Key-Count
 @app.route('/kv-store/key-count', methods=['GET'])
 def keyCount():
     count = h.getCount()
@@ -176,102 +141,56 @@ def keyCount():
         }
     return make_response(temp),200
 
-@app.route('/kv-store/view-change',methods=['PUT'])
-def viewChange():
-    # let us begin the view change
-    # had an idea for a view null check in another branch
-    # assume that the view is always there since if no view, no access 
-    data = request.get_json()#its our data!!!
-    loc = h.getSelfAddress()
-    # oldView = h.getView()
-    #first we need to change the view of the current node
-    # set the view
-    # print('joe mama', flush = True)
-    # print(data['view'], flush = True)
-    forwarding = h.updateView(data["view"])#this should update the view, sends to the hash.py
-    #now we need to reshard ....
-    shards = []
+#return entire store
+@app.route('/kv-store/table', methods=['GET'])
+def getStore():
+    values,vectors = store.returnTablesDict()
+    temp = {
+        "message": "Key count retrieved successfully",
+        "values":values,
+        "vectors":vectors
+        }
+    return make_response(temp),200
 
-    forward = [f for f in forwarding if f != loc]
 
-    for v in forward:
-        # if v is not loc:
-        url = 'http://' + v + '/kv-store/view-change-forward' 
-        temp = (formatResult(requests.put(url, timeout=5,headers={
-                'Content-Type': 'application/json'}, json=data)))
-        # res, b = requests.put(url, headers={
-        #         'Content-Type': 'application/json'}, json=data)
-        res, b = temp
-        shards.append({
-            "address": res["address"]
-            # "key-count": res["key-count"]
-        })
 
-    # response = {
-    #    "message":"View change successful",
-    #    "shards": shards,
-    #    "forwarding": forward
-    # }
+
+#gossip protocol
+#
+def gossip():
+    #I want to gossip every second to ensure I have the latest data
     
-    # return make_response(response),200
-    count = reshard(store.returnStore())
-    shards.append({
-        "address": loc
-        # "key-count": h.getCount()
-    })
-    #get keycount, append to appropriate indexed shard address
-    for i in range(len(shards)):
-        val = shards[i]["address"]
-        url = 'http://' + val + '/kv-store/key-count'
-        temp = (formatResult(requests.get(url,timeout=5, headers={
+    while True:
+        #first we must send a request that obtains the entire table from various nodes
+        global store
+        shard = h.getShard()
+        for i in shard:
+            if i != address:
+                try:
+                    # print(i)
+                    url = 'http://' + i + '/kv-store/table'
+                    temp = (formatResult(requests.get(url,timeout=2, headers={
                     'Content-Type': 'application/json'})))
+                    res,b = temp
+                    print(res["values"],flush=True)
+                    store.comparison(res["values"],res["vectors"])
+                    # res, b = temp
+                except:
+                    print("something bad happened and weeeee don't care!!!")
+                    pass
+                    
+        # for i in shard:
+        #     app.logger.info(str(i))
 
-        res, b = temp
-        shards[i].update({"key-count": res["key-count"]})
+        time.sleep(1)
 
-
-
-    
-    response = {
-       "message":"View change successful",
-       "shards": shards
-    }
-
-    return make_response(response),200
-
-
-
-
-@app.route('/kv-store/view-change-forward',methods=['PUT'])
-def viewChangeForward():
-    data = request.get_json()#its our data!!!
-    # #get original view
-    sAddr = h.getSelfAddress()
-    # #first we need to change the view of the current node
-    # # set the view
-
-    forwarding = h.updateView(data["view"])#this should update the view, sends to the hash.py
-    c = reshard(store.returnStore())
-    res = {
-        "address": sAddr
-        #"key-count": c
-    }
-
-    return make_response(res), 200
-
-    
-
-
-
-
-
-##HELPER FUNCTIONS
+#HELPER FUNCTIONS
 def formatResult(result):
     status_code = result.status_code
     result = result.json()
 
     if result != None:
-        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards"]
+        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors"]
         result = {k: result[k] for k in jsonKeys if k in result}
 
     else:
@@ -281,29 +200,11 @@ def formatResult(result):
     return result, status_code
 
 
-def reshard(kv):
-    for key,val in kv:
-        x, y = h.checkHash(key)
-        if not x:
-            data = [{"value": val}]
-          #we forward to insert
-            try:
-                url = 'http://' + y + '/kv-store/keys/' + key
-                temp = (formatResult(requests.put(url,timeout=5, headers={
-                    'Content-Type': 'application/json'}, json={"value":val})))
-                res = store.deleteValue(key)
-                h.decCount()
-            except:
-                pass
-        
-    return h.getCount()
-
-          #if we get 200 from insert, we delete the key from current node and continue on
-
-
 if __name__ == '__main__':
     num_keys = 0 #number of keys in our key-value store
     #app.config['JSON_SORT_KEYS'] = False
+    threading = threading.Thread(target=gossip)
+    threading.start()
     app.run(debug=True, threaded=True, host='0.0.0.0', port=13800)
 # why 0.0.0.0?? https://stackoverflow.com/questions/20778771/what-is-the-difference-between-0-0-0-0-127-0-0-1-and-localhost
 # it basically checks if there is anything being point to the network for the local IP
