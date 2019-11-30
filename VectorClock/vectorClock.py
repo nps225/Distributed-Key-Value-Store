@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from store import Store
 
 class VectorClock:
 
@@ -63,6 +64,26 @@ class VectorClock:
 
         
         self.clock = clock0
+
+        
+    #self being node on the recieving end of gossip, vClck for sending node of gossip, st1 for receiving and st2 for sending
+    def gossipClock(self, vClck, st1, st2):
+        clock0 = self.getClock()
+        clock1 = vClck.getClock()
+        if clock0 != clock1:
+            print('yeet')
+
+        else:
+            stamp0 = self.getTimeStamp()
+            stamp1 = vClck.getTimeStamp()
+            if stamp0 < stamp1:
+                clock0 = clock1
+
+        
+        self.clock = clock0
+
+
+
 
 
 
