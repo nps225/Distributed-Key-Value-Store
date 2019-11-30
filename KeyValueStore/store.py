@@ -1,3 +1,4 @@
+from VectorClock.vectorClock import VectorClock
 # key-value store class
 class Store:
     dict
@@ -7,6 +8,7 @@ class Store:
         # first we need to initialize our dictionary
         self.dict = {}
         self.clock = {}
+        self.timestamp = {}
 
     # INSERT
     # returns if it already existed -- server side should handle the errors
@@ -24,6 +26,10 @@ class Store:
     def upsertVC(self, key, clock):
         self.clock[key] = clock
         return clock
+
+    def upsertTime(self, key, stamp):
+        self.timestamp[key] = stamp
+        return timestamp
 
     # GET
     # returns a tuple (a,b,c)
@@ -51,6 +57,8 @@ class Store:
     def getClock(self, key):
         return self.clock[key]
 
+    def getTime(self, key):
+        return self.timestamp[key]
     # DELETE
     # returns a boolean -- true if exists -- false if not
     def deleteValue(self, key):
@@ -80,20 +88,67 @@ class Store:
     def returnTablesDict(self):
         return (self.dict, self.clock)
 
-    def comparison(self, store, clock):
+    def comparison(self, store, selfVCObj, storeVCObj, selfAddr, storeAddr):
+        selfVC = selfVCObj.getClock()
+        storeVC = storeVCObj.getClock()
+        changeSelf = False
+        changeStore = False
         if(self.dict == store):  # later make it so you check if the clock is the same as well
             keys = store.keys()
             for i in keys:
-               selfClock = self.getClock(i)
-               storeClock = store.getClock(i)
-               sum1 = sum(selfClock)
-               sum2 = sum(storeClock)
-               if sum1 > sum2:
-                  print('store outdated')
-               elif sum1 < sum2:
-                  print('self outdated')
-               else:
-                  print('uh oh timestamp time')
+                selfClock = self.getClock(i)
+                storeClock = store.getClock(i)
+                sum1 = sum(selfClock)
+                sum2 = sum(storeClock)
+                if sum1 > sum2:
+                    x, val, z = self.getValue(i)
+                    t = self.getTime(i)
+                    store.upsertValue(i, val)
+                    store.upsertVC(selfClock)
+                    store.upsertTime(t)
+                    # storeVCObj.compClock(selfVCObj)
+                    changeStore = True
+             
+                elif sum1 < sum2:
+                    x, val, z = store.getValue(i)
+                    t = store.getTime(i)
+                    self.upsertValue(i, val)
+                    self.upsertVC(selfClock)
+                    self.upsertTime(t)
+                    changeSelf = True
+                    # selfVCObj.compClock(storeVCObj)
+                    
+                    
+                else:
+                    selfT = self.getTime(i)
+                    storeT = store.getTime(i)
+                    if selfT > storeT:
+                        x, val, z = self.getValue(i)
+                        t = self.getTime(i)
+                        store.upsertValue(i, val)
+                        store.upsertVC(selfClock)
+                        store.upsertTime(t)
+                        changeStore = True
+                        # storeVCObj.compClock(selfVCObj)
+                    elif storeT > selfT:
+                        x, val, z = store.getValue(i)
+                        t = store.getTime(i)
+                        self.upsertValue(i, val)
+                        self.upsertVC(selfClock)
+                        self.upsertTime(t)
+                        changeSelf = True
+                        # selfVCObj.compClock(storeVCObj)
+                    else:
+                        print('all is well aha ha')
+
+                
+            if changeSelf == True:
+                selfVCObj.compClock(storeVCObj)
+            
+            if changeStore == True:
+                storeVCObj.compClock(selfVCObj)
+
+                    
 
             return True  # means we are up to date
         else:  # not up to date

@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from store import Store
+from KeyValueStore.store import Store
 
 class VectorClock:
 
@@ -42,12 +42,41 @@ class VectorClock:
         return self.timeStamp
 
 #for doing a send/recieve
-    def incClock(self, i):
+    def incClock(self, address):
+        i = 0
+        res = None
+        for adr in self.view:
+            if adr is address:
+                res = i
+            else:
+                i+=1
+
+            
+        if res:
+            self.clock[res]+=1
+            self.timeStamp = datetime.timestamp(datetime.now())
+            return 'Succ'
+        else:
+            return 'Not allowed'
+
+    def incClockIdx(self, i):
         if i < len(self.view):
             self.clock[i]+=1
             self.timeStamp = datetime.timestamp(datetime.now())
+            return 'Succ'
         else:
-            return 'Not allowed'
+            return 'Not Allowed'
+
+
+    #should we change timestamp to new timestamp or newest nodes timestamp?
+    def setClockidx(self, i, val):
+        if i < len(self.view):
+            self.clock[i] = val
+            self.timeStamp = datetime.timestamp(datetime.now())
+            return 'Succ'
+        else:
+            return 'Not Allowed'
+
 #for recieve, self is the recieving node and vClck is the one that did the send!
 #if vc is same during gossip, compare the timestamps and set vc as so
     def compClock(self, vClck):
@@ -64,6 +93,8 @@ class VectorClock:
 
         
         self.clock = clock0
+
+        
 
         
     # #self being node on the recieving end of gossip, vClck for sending node of gossip, st1 for receiving and st2 for sending
