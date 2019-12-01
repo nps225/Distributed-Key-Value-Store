@@ -86,7 +86,66 @@ class Store:
         return (self.returnStore(), self.returnClock())
 
     def returnTablesDict(self):
-        return (self.dict, self.clock)
+        return (self.dict, self.clock, self.timestamp)
+
+
+
+
+    def comparison0(self,store,clock, timestamps):
+        changeSelf = False
+        changeStore = False
+        if(self.dict == store): #later make it so you check if the clock is the same as well
+            keys = store.keys()
+            for i in keys:
+                sum1 = sum(self.clock[i])
+                sum2 = sum(clock[i])
+                if sum1 > sum2:
+                    store[i] = self.dict[i]
+                    clock[i] = self.getClock(i)
+                    timestamps[i] = self.getTime(i)
+                    changeStore = True
+            
+                elif sum1 < sum2:
+                    self.dict[i] = store[i]
+                    self.upsertVC(i, clock[i])
+                    self.upsertTime(i, timestamps[i])
+                    changeSelf = True
+
+            return changeSelf, changeStore
+
+        else:#not up to date #we will bring our dictionary up to date
+            keys = store.keys()
+            for i in keys:
+                if(self.dict.get(i) != store.get(i)):
+                    if self.dict.get(i) == None:
+                        self.dict[i] = store[i]
+                        self.upsertVC(i, clock[i])
+                        self.upsertTime(i, timestamps[i])
+                        changeSelf = True
+                        
+                    else:
+                        store[i] = self.dict[i]
+                        clock[i] = self.getClock(i)
+                        timestamps[i] = self.getTime(i)
+                        changeStore = True
+
+                    
+                elif self.dict.get(i) == store.get(i):
+                    sum1 = sum(self.clock[i])
+                    sum2 = sum(clock[i])
+                    if sum1 > sum2:
+                        store[i] = self.dict[i]
+                        clock[i] = self.getClock(i)
+                        timestamps[i] = self.getTime(i)
+                        changeStore = True
+                
+                    elif sum1 < sum2:
+                        self.dict[i] = store[i]
+                        self.upsertVC(i, clock[i])
+                        self.upsertTime(i, timestamps[i])
+                        changeSelf = True
+
+            return changeSelf, changeStore
 
     def comparison(self, store, selfVCObj, storeVCObj, selfAddr, storeAddr):
         selfVC = selfVCObj.getClock()

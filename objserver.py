@@ -32,8 +32,8 @@ view = os.getenv("VIEW").split(",")
 address = os.getenv("ADDRESS")
 #hash handles view + count + hashing algorithm
 h = Hash()# you can check which shard you are in + it will return you a forwarding address if needed
-timmmme = 0
 v = VectorClock()
+timmmme = 0
 #UPSERT
 @app.route('/kv-store/keys/<key>', methods=['PUT'])
 def upsertKey(key):
@@ -146,24 +146,25 @@ def keyCount():
 #return entire store
 @app.route('/kv-store/table', methods=['GET'])
 def getStore():
-    values,vectors, timestamps = store.returnTablesDict()
-    temp = {
-        "message": "Key count retrieved successfully",
-        "values":values,
-        "vectors":vectors,
-        "timestamps": timestamps
-        }
+    temp = store
+    # values,vectors = store.returnTablesDict()
+    # temp = {
+    #     "message": "Key count retrieved successfully",
+    #     "values":values,
+    #     "vectors":vectors
+    #     }
+    return make_response(temp),200
+@app.route('/kv-store/time', methods=['GET'])
+def getStore():
+    temp = v
+    # values,vectors = store.returnTablesDict()
+    # temp = {
+    #     "message": "Key count retrieved successfully",
+    #     "values":values,
+    #     "vectors":vectors
+    #     }
     return make_response(temp),200
 
-
-@app.route('/kv-store/clock', methods=['GET'])
-def getClock():
-    vClock = v
-    temp = {
-        "message": "Key count retrieved successfully",
-        "vectorC": vClock
-        }
-    return make_response(temp),200
 
 
 
@@ -183,21 +184,13 @@ def gossip():
                     url = 'http://' + i + '/kv-store/table'
                     temp = (formatResult(requests.get(url,timeout=2, headers={
                     'Content-Type': 'application/json'})))
-                    res,b = temp
-                    print(res["values"],flush=True)
-
-                    changeSelf, changeStore = store.comparison0(res["values"],res["vectors"], res["timestamps"])
-                    url = 'http://' + i + '/kv-store/clock'
-                    temp = (formatResult(requests.get(url,timeout=2, headers={
-                        'Content-Type': 'application/json'})))
-                    if changeSelf:
-                        
-                        storeClock, b = temp
-                        v.compClock(storeClock)
-                    if changeStore:
-                        storeClock, b = temp
-                        storeClock.compClock(v)
-                        
+                    sto,b = temp
+                    url = 'http://' + i + '/kv-store/time'
+                    temp1 = (formatResult(requests.get(url,timeout=2, headers={
+                    'Content-Type': 'application/json'})))
+                    storeT,b = temp1
+                    print(type(sto),flush=True)
+                    store.comparison(sto, v, storeT, address, i)
                     # res, b = temp
                 except:
                     print("something bad happened and weeeee don't care!!!")
@@ -214,7 +207,7 @@ def formatResult(result):
     result = result.json()
 
     if result != None:
-        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors", "timestamps"]
+        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors"]
         result = {k: result[k] for k in jsonKeys if k in result}
 
     else:
