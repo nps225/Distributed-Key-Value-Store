@@ -20,19 +20,19 @@ print(test.returnTablesDict())
 compare = {
    "a":"mitchell",
    "b":"cant",
-   "c":"test"
+   "c":"works"
 }
 
 compare0 = {
-   "a":[1,0],
+   "a":[1,1],
    "b":[2,0],
-   "c":[3,0]
+   "c":[4,0]
 }
 
 compare1 = {
    "a":ts,
-   "b":ts,
-   "c":ts
+   "b":ts+1,
+   "c":ts+2
 }
 
 # c,b = test.returnTablesDict()
