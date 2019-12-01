@@ -4,12 +4,12 @@ import time
 #create an instance of a store
 test = Store()
 ts = time.time()
-test.upsertValue("a","mitchell")
-test.upsertVC("a",[1,0])
-test.upsertTimestamp("a",ts)
-test.upsertValue("b","temp")
-test.upsertVC("b",[2,0])
-test.upsertTimestamp("b",ts)
+# test.upsertValue("a","mitchell")
+# test.upsertVC("a",[1,0])
+# test.upsertTimestamp("a",ts)
+# test.upsertValue("b","temp")
+# test.upsertVC("b",[2,0])
+# test.upsertTimestamp("b",ts)
 # test.upsertValue("c","confirmed")
 # test.upsertVC("c",[3,0])
 
@@ -35,9 +35,11 @@ compare1 = {
    "c":ts+2
 }
 
+
 # c,b = test.returnTablesDict()
 # print(test.dict)
-print(test.comparison(compare,compare0,compare1))
+# print(test.comparison(compare,compare0,compare1))
+test.comparison({},{},{})
 # print(test.dict)
 # # print(c == compare)
 

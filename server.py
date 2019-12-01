@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, redirect,make_response
 import logging
 import requests
 from KeyValueStore.store import Store
+from VectorClock.vectorClock import VectorClock
 from Hash.hash import Hash
 import json
 import time
@@ -31,7 +32,10 @@ view = os.getenv("VIEW").split(",")
 address = os.getenv("ADDRESS")
 #hash handles view + count + hashing algorithm
 h = Hash()# you can check which shard you are in + it will return you a forwarding address if needed
-timmmme = 0
+
+#init our VC
+vc = VectorClock()
+
 #UPSERT
 @app.route('/kv-store/keys/<key>', methods=['PUT'])
 def upsertKey(key):
@@ -58,6 +62,10 @@ def upsertKey(key):
 
             value = data["value"]  # value
             res = store.upsertValue(key, value)
+            vc.incClock()
+            temp = vc.getClock().copy() # need a copy of our list to prevent change
+            store.upsertVC(key,temp)
+            store.upsertTimestamp(key,vc.getTimeStamp())
             if(not res):
                 h.incCount()
                 response = jsonify(
@@ -70,6 +78,7 @@ def upsertKey(key):
                     message="Updated successfully",
                     replaced=res
                 ), 200
+            #insert -> inc our clock
             #gossip here
             #gossipPUT(addresses,key,data)
             return response
@@ -82,6 +91,8 @@ def upsertKey(key):
                     'Content-Type': 'application/json'}, json=request.get_json())))
 
                 a, b = temp
+                #on forward -> inc our clock
+                vc.incClock()
                 return jsonify(
                     message='Added successful',
                     replaced=a["replaced"],
@@ -144,14 +155,16 @@ def keyCount():
 #return entire store
 @app.route('/kv-store/table', methods=['GET'])
 def getStore():
-    values,vectors = store.returnTablesDict()
+    values,vectors,timestamps = store.returnTablesDict()
     temp = {
         "message": "Key count retrieved successfully",
         "values":values,
-        "vectors":vectors
+        "vectors":vectors,
+        "timestamps":timestamps,
+        "VectorClock":vc.getClock().copy(),
+        "Timestamp":vc.getTimeStamp()
         }
     return make_response(temp),200
-
 
 
 
@@ -173,7 +186,11 @@ def gossip():
                     'Content-Type': 'application/json'})))
                     res,b = temp
                     print(res["values"],flush=True)
-                    store.comparison(res["values"],res["vectors"])
+                    store.comparison(res["values"],res["vectors"],res["timestamps"])
+                    #now update our vector clock with the correct values
+                    tempVC = VectorClock()
+                    tempVC.assignClock(res["VectorClock"])
+                    vc.compClock(tempVC)
                     # res, b = temp
                 except:
                     print("something bad happened and weeeee don't care!!!")
@@ -190,7 +207,7 @@ def formatResult(result):
     result = result.json()
 
     if result != None:
-        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors"]
+        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors","timestamps","VectorClock","Timestamp"]
         result = {k: result[k] for k in jsonKeys if k in result}
 
     else:

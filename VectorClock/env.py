@@ -6,5 +6,10 @@ os.environ["ADDRESS"] = "10.10.0.6:13800"
 os.environ["REPL_FACTOR"] = "3"
 
 vc = VectorClock()
+vc1 = VectorClock()
 print(vc.getClock())
+vc.incClock()
+vc.incClock()
 print(vc.getClock())
+print(vc1.compClock(vc))
+print(vc1.getClock())

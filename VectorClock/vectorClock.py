@@ -30,7 +30,10 @@ class VectorClock:
         
    #      self.clock = newClock
    #      self.timeStamp = datetime.timestamp(datetime.now())
-        
+    def assignClock(self,clock):
+       self.clock = clock
+       return self.clock
+
     def getClock(self):
         return self.clock
 
@@ -38,6 +41,7 @@ class VectorClock:
         return self.view
 
     def getTimeStamp(self):
+        self.timeStamp = datetime.timestamp(datetime.now())
         return self.timeStamp
 
 #for doing a send/recieve
@@ -70,6 +74,7 @@ class VectorClock:
 #for recieve, self is the recieving node and vClck is the one that did the send!
 #if vc is same during gossip, compare the timestamps and set vc as so
     def compClock(self, vClck):
+       #this is a bit more complicated since if we reshard so keep in mind this
         clock0 = self.getClock()
         clock1 = vClck.getClock()
         if clock1 != clock0:
@@ -83,6 +88,7 @@ class VectorClock:
 
         
         self.clock = clock0
+        return self.clock
 
         
 
