@@ -1,4 +1,5 @@
 # key-value store class
+import os
 class Store:
    dict
 
@@ -8,6 +9,28 @@ class Store:
       self.dict = {}
       self.clock = {}
       self.timestamps = {}
+
+   #checkHash to make sure we are in the right shard
+   def checkHash(self,key):
+      #get latest copy of our view
+      view = os.getenv("VIEW").split(",")
+      #obtain our nodes address
+      address = os.getenv("ADDRESS")
+      replication = int(os.getenv("REPL_FACTOR"))#gets the number of replicas that are present
+      
+      #obtain our shard - we get a check of a new hash everytime by getting the
+      # value and the hashing it, then divide by the current view length
+      # this should stay the same when we do a get, it doesnt reshard
+      # only reshards when we have a viewChange with the modulo
+      val_ascii = sum([ord(c) for c in key])
+      # shard = (val_ascii).encode().hex() % (len(view))
+      #we are going to check
+      shard = int((val_ascii) % (len(view)/replication))
+      addresses = []
+      for i in range(replication):
+         addresses.append(view[shard * replication + i].replace("\"",""))
+   
+      return addresses
 
    # INSERT
    # returns if it already existed -- server side should handle the errors
@@ -105,6 +128,12 @@ class Store:
                 timestamp = timestamps.get(i)
                 value = store.get(i)
                 ##COMPARISON STARTS HERE
+                #first check if the key is supposed to be here or not
+                #use this code when we need to reshard
+               #  addresses = self.checkHash(i)
+               #  address = os.getenv("ADDRESS")
+               #  if(address in addresses):
+                   
                 #only time we care is if the values are different
                 if((self.dict.get(i) != value)):
                     #check first if the value exists
