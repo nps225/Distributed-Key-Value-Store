@@ -30,12 +30,12 @@ nohup docker run --name="node2"        --net=kv_subnet     \
            -e REPL_FACTOR="2"                        \
            kv-store:3.0 &
 
-#nohup docker run --name="node3"        --net=kv_subnet     \
-#           --ip=10.10.0.4        -p 13804:13800      \
-#           -e ADDRESS="${addr3}"                     \
-#           -e VIEW=${full_view}              \
-#           -e REPL_FACTOR="2"                        \
-#           kv-store:3.0 &
+nohup docker run --name="node3"        --net=kv_subnet     \
+           --ip=10.10.0.4        -p 13804:13800      \
+           -e ADDRESS="${addr3}"                     \
+           -e VIEW=${full_view}              \
+           -e REPL_FACTOR="2"                        \
+           kv-store:3.0 &
 
 docker run --name="node4"        --net=kv_subnet     \
            --ip=10.10.0.5        -p 13805:13800      \

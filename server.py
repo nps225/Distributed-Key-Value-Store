@@ -96,13 +96,13 @@ def upsertKey(key):
                 try:
                     data = request.get_json()
                     data["VectorClock"] = vc.getClock().copy()
-                    temp = (formatResult(requests.put(url,timeout=5, headers={
+                    temp = (formatResult(requests.put(url,timeout=2, headers={
                         'Content-Type': 'application/json'}, json=data)))
 
                     a, b = temp
                     #on forward -> inc our clock
                     return jsonify(
-                        message='Added successful',
+                        message=a["message"],
                         replaced=a["replaced"],
                         address=y
                     ),b
@@ -141,7 +141,7 @@ def getKey(key):
         url = 'http://' + y + '/kv-store/keys/' + key
         # now let's grab make our request
         try:
-            temp = (formatResult(requests.get(url= url,timeout=5, headers={
+            temp = (formatResult(requests.get(url= url,timeout=2, headers={
                 'Content-Type': 'application/json'})))
             a,b = temp
             a.update({"address":y})
@@ -178,6 +178,17 @@ def getStore():
     return make_response(temp),200
 
 
+@app.route('/kv-store/view', methods=['GET'])#for now this just returns my vector clock
+def getView():
+    # values,vectors,timestamps = store.returnTablesDict()
+    temp = {
+        "VectorClock":vc.getClock().copy()
+        }
+    return make_response(temp),200
+
+
+
+
 
 #gossip protocol
 #
@@ -188,8 +199,9 @@ def gossip():
         #first we must send a request that obtains the entire table from various nodes
         global store
         shard = h.getShard()
-        for i in shard:
-            if i != address:
+        addresses = os.getenv("VIEW").replace("\"","").split(",")
+        for i in addresses:
+            if i in shard and i != address:
                 try:
                     # print(i)
                     url = 'http://' + i + '/kv-store/table'
@@ -206,6 +218,24 @@ def gossip():
                 except:
                     print("something bad happened and weeeee don't care!!!")
                     pass
+            else:#not in our shard
+                #we need to update our clock value
+                try:
+                    # print(i)
+                    url = 'http://' + i + '/kv-store/view'
+                    temp = (formatResult(requests.get(url,timeout=2, headers={
+                    'Content-Type': 'application/json'})))
+                    res,b = temp
+                    #now update our vector clock with the correct values
+                    tempVC = VectorClock()
+                    tempVC.assignClock(res["VectorClock"])
+                    vc.compClock(tempVC)
+                    print(vc.getClock())
+                    # res, b = temp
+                except:
+                    print("something bad happened and weeeee don't care!!!")
+                    pass
+
                     
         # for i in shard:
         #     app.logger.info(str(i))
