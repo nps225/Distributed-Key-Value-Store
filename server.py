@@ -53,13 +53,18 @@ def upsertKey(key):
             message="Error in PUT"
         ), 400
     else:  # else for readability?
+        #first check if there is a VectorClock attached
         # make the request to the key value store
         # key
         #if the key is put in our key-value store
         addresses = h.checkHash(key)
         #handle the insert here
         if address in addresses:#if it is at this address
-
+            if "VectorClock" in data:
+                sentVC = data.get("VectorClock")
+                newVC = VectorClock()
+                newVC.clock = sentVC
+                vc.compClock(newVC)
             value = data["value"]  # value
             res = store.upsertValue(key, value)
             vc.incClock()
@@ -84,26 +89,32 @@ def upsertKey(key):
             return response
         else:
             #we need to handle if we get a 503 here then we move onto the next request for replica
-            y = addresses[0]
-            url = 'http://' + y + '/kv-store/keys/' + key
-            try:
-                temp = (formatResult(requests.put(url,timeout=5, headers={
-                    'Content-Type': 'application/json'}, json=request.get_json())))
+            vc.incClock()
+            for addr in addresses:
+                y = addr
+                url = 'http://' + y + '/kv-store/keys/' + key
+                try:
+                    data = request.get_json()
+                    data["VectorClock"] = vc.getClock().copy()
+                    temp = (formatResult(requests.put(url,timeout=5, headers={
+                        'Content-Type': 'application/json'}, json=data)))
 
-                a, b = temp
-                #on forward -> inc our clock
-                vc.incClock()
-                return jsonify(
-                    message='Added successful',
-                    replaced=a["replaced"],
-                    address=y
-                ),b
-            except:  # return that main is down
-                return jsonify(
-                    error="instance is down",
-                    message="Error in PUT",
-                    address = y
-                ), 503
+                    a, b = temp
+                    #on forward -> inc our clock
+                    return jsonify(
+                        message='Added successful',
+                        replaced=a["replaced"],
+                        address=y
+                    ),b
+                except:  # return that main is down
+                    pass
+                time.sleep(1)
+            
+            return jsonify(
+                        error="instance is down",
+                        message="Error in PUT",
+                        address = y
+                    ), 503
 
 # GET KEY IMPLEMENTATION
 @app.route('/kv-store/keys/<key>', methods=['GET'])
@@ -185,7 +196,7 @@ def gossip():
                     temp = (formatResult(requests.get(url,timeout=2, headers={
                     'Content-Type': 'application/json'})))
                     res,b = temp
-                    print(res["values"],flush=True)
+                    print(res["values"],res["vectors"],flush=True)
                     store.comparison(res["values"],res["vectors"],res["timestamps"])
                     #now update our vector clock with the correct values
                     tempVC = VectorClock()
