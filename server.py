@@ -183,7 +183,8 @@ def getView():
     # values,vectors,timestamps = store.returnTablesDict()
     temp = {
         "VectorClock":vc.getClock().copy(),
-        "View":os.getenv("VIEW")
+        "View":os.getenv("VIEW"),
+        "REPL":os.getenv("REPL_FACTOR")
         }
     return make_response(temp),200
 
@@ -197,10 +198,30 @@ def viewChange():
     h.updateView(viewString)
     h.updateReplicationFactor(str(repl))
     #alright now lets reshard
+    #now lets forward our request to all nodes for the view change
+    nodes = h.getView()
+    l = []
+    for node in nodes:
+        if not address == node:
+            url = 'http://' + node + '/kv-store/view-change-forward'
+            temp = (formatResult(requests.put(url,timeout=2, headers={
+                'Content-Type': 'application/json'}, json=data)))
+            l.append(temp)
     kv, vc, ts = store.returnTablesDict()
-    data["info"] = reshard(kv,vc,ts)
+    data["length"] = len(l)
+    # data["info"] = reshard(kv,vc,ts)
     # data["count"] = count
     #now we need to update our view
+    return make_response(data),200
+
+@app.route('/kv-store/view-change-forward',methods=['PUT'])
+def viewChangeForward():
+    data = request.get_json()
+    view = data["view"] #returns a list now :O
+    repl = data["repl-factor"]
+    viewString = ','.join(view)
+    h.updateView(viewString)
+    h.updateReplicationFactor(str(repl))
     return make_response(data),200
 
 @app.route('/kv-store/view-change/<key>',methods=['PUT'])
@@ -222,11 +243,14 @@ def reshard(kv,vc,ts):
         if not address in addresses:
             #now forward the value to the address
             l.append(addresses[0])
-            url = 'http://' + addresses[0] + '/kv-store/view-change/' + key
-            temp = (formatResult(requests.put(url,timeout=2, headers={
-                        'Content-Type': 'application/json'}, json={"value":"test","causal-context":{"VectorClock":b.get(key),"Timestamp":c.get(key)}})))
-            store.deleteValue(key)
-            h.decCount()
+            try:
+                url = 'http://' + addresses[0] + '/kv-store/view-change/' + key
+                temp = (formatResult(requests.put(url,timeout=2, headers={
+                            'Content-Type': 'application/json'}, json={"value":"test","causal-context":{"VectorClock":b.get(key),"Timestamp":c.get(key)}})))
+                store.deleteValue(key)
+                h.decCount()
+            except:
+                pass
     return l
 
 #gossip protocol
