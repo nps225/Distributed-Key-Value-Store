@@ -209,7 +209,7 @@ def viewChange():
             l.append(temp)
     kv, vc, ts = store.returnTablesDict()
     data["length"] = len(l)
-    # data["info"] = reshard(kv,vc,ts)
+    reshard(kv,vc,ts)
     # data["count"] = count
     #now we need to update our view
     return make_response(data),200
@@ -222,14 +222,17 @@ def viewChangeForward():
     viewString = ','.join(view)
     h.updateView(viewString)
     h.updateReplicationFactor(str(repl))
+    kv, vc, ts = store.returnTablesDict()
+    reshard(kv,vc,ts)
     return make_response(data),200
 
 @app.route('/kv-store/view-change/<key>',methods=['PUT'])
 def reshardInsert(key):
     data = request.get_json()
-    res = store.upsertValue(key, data["value"])
-    store.upsertVC(key,data["causal-context"]["VectorClock"])
-    store.upsertTimestamp(key,data["causal-context"]["Timestamp"]) 
+    if(address in h.checkHash(key)):
+        res = store.upsertValue(key, data["value"])
+        store.upsertVC(key,data["causal-context"]["VectorClock"])
+        store.upsertTimestamp(key,data["causal-context"]["Timestamp"]) 
     return make_response({"value":res},200)
 
 
@@ -325,8 +328,8 @@ def formatResult(result):
 if __name__ == '__main__':
     num_keys = 0 #number of keys in our key-value store
     #app.config['JSON_SORT_KEYS'] = False
-    # threading = threading.Thread(target=gossip)
-    # threading.start()
+    threading = threading.Thread(target=gossip)
+    threading.start()
     #second thread to handle the view sync? -- try in regular gossip -> try here if it is too laggy
     # threading2 = threading.Thread(target=gossip2)
     # threading2.start()
