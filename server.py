@@ -198,16 +198,36 @@ def viewChange():
     h.updateReplicationFactor(str(repl))
     #alright now lets reshard
     kv, vc, ts = store.returnTablesDict()
+    data["info"] = reshard(kv,vc,ts)
     # data["count"] = count
     #now we need to update our view
     return make_response(data),200
 
 @app.route('/kv-store/view-change/<key>',methods=['PUT'])
-def reshardInsert():
+def reshardInsert(key):
     data = request.get_json()
+    res = store.upsertValue(key, data["value"])
+    store.upsertVC(key,data["causal-context"]["VectorClock"])
+    store.upsertTimestamp(key,data["causal-context"]["Timestamp"]) 
+    return make_response({"value":res},200)
 
-    return make_response({"value":data["value"]},200)
 
+def reshard(kv,vc,ts):
+    a = kv.copy()
+    b = vc.copy()
+    c = ts.copy()
+    l = []
+    for key in a:
+        addresses = h.checkHash(key)
+        if not address in addresses:
+            #now forward the value to the address
+            l.append(addresses[0])
+            url = 'http://' + addresses[0] + '/kv-store/view-change/' + key
+            temp = (formatResult(requests.put(url,timeout=2, headers={
+                        'Content-Type': 'application/json'}, json={"value":"test","causal-context":{"VectorClock":b.get(key),"Timestamp":c.get(key)}})))
+            store.deleteValue(key)
+            h.decCount()
+    return l
 
 #gossip protocol
 #

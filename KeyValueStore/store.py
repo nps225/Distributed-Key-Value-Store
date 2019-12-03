@@ -85,8 +85,8 @@ class Store:
       exists = key in self.dict
       if(exists):
          self.dict.pop(key)
-         # self.timestamps.pop(key)
-         # self.clock.pop(key)
+         self.timestamps.pop(key)
+         self.clock.pop(key)
          return exists
       # if dne -- stop here
       return exists
