@@ -113,7 +113,7 @@ def upsertKey(key):
             return jsonify(
                         error="instance is down",
                         message="Error in PUT",
-                        address = y
+                        address = addresses
                     ), 503
 
 # GET KEY IMPLEMENTATION
@@ -182,12 +182,31 @@ def getStore():
 def getView():
     # values,vectors,timestamps = store.returnTablesDict()
     temp = {
-        "VectorClock":vc.getClock().copy()
+        "VectorClock":vc.getClock().copy(),
+        "View":os.getenv("VIEW")
         }
     return make_response(temp),200
 
 
+@app.route('/kv-store/view-change',methods=['PUT'])
+def viewChange():
+    data = request.get_json()
+    view = data["view"] #returns a list now :O
+    repl = data["repl-factor"]
+    viewString = ','.join(view)
+    h.updateView(viewString)
+    h.updateReplicationFactor(str(repl))
+    #alright now lets reshard
+    kv, vc, ts = store.returnTablesDict()
+    # data["count"] = count
+    #now we need to update our view
+    return make_response(data),200
 
+@app.route('/kv-store/view-change/<key>',methods=['PUT'])
+def reshardInsert():
+    data = request.get_json()
+
+    return make_response({"value":data["value"]},200)
 
 
 #gossip protocol
@@ -242,13 +261,14 @@ def gossip():
 
         time.sleep(1)
 
+
 #HELPER FUNCTIONS
 def formatResult(result):
     status_code = result.status_code
     result = result.json()
 
     if result != None:
-        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors","timestamps","VectorClock","Timestamp"]
+        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors","timestamps","VectorClock","Timestamp","View"]
         result = {k: result[k] for k in jsonKeys if k in result}
 
     else:
@@ -261,8 +281,11 @@ def formatResult(result):
 if __name__ == '__main__':
     num_keys = 0 #number of keys in our key-value store
     #app.config['JSON_SORT_KEYS'] = False
-    threading = threading.Thread(target=gossip)
-    threading.start()
+    # threading = threading.Thread(target=gossip)
+    # threading.start()
+    #second thread to handle the view sync? -- try in regular gossip -> try here if it is too laggy
+    # threading2 = threading.Thread(target=gossip2)
+    # threading2.start()
     app.run(debug=True, threaded=True, host='0.0.0.0', port=13800)
 # why 0.0.0.0?? https://stackoverflow.com/questions/20778771/what-is-the-difference-between-0-0-0-0-127-0-0-1-and-localhost
 # it basically checks if there is anything being point to the network for the local IP

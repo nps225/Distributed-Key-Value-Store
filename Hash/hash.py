@@ -66,3 +66,7 @@ class Hash:
       # assume the views are not wrong and durable from the user
       os.environ["VIEW"] = updateView
       return os.environ["VIEW"].split(",")
+
+   def updateReplicationFactor(self,updateFactor):
+      os.environ["REPL_FACTOR"] = updateFactor
+      return os.environ["REPL_FACTOR"]
