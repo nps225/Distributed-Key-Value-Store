@@ -192,14 +192,16 @@ def getView():
 @app.route('/kv-store/view-change',methods=['PUT'])
 def viewChange():
     data = request.get_json()
+    nodes = h.getView().copy()
     view = data["view"] #returns a list now :O
     repl = data["repl-factor"]
     viewString = ','.join(view)
     h.updateView(viewString)
     h.updateReplicationFactor(str(repl))
+    nodes = list(set(nodes) | set(h.getView()))
+    data["nodes2"] = nodes
     #alright now lets reshard
     #now lets forward our request to all nodes for the view change
-    nodes = h.getView()
     l = []
     for node in nodes:
         if not address == node:
@@ -254,6 +256,8 @@ def reshard(kv,vc,ts):
                 h.decCount()
             except:
                 pass
+    time.sleep(1)
+                
     return l
 
 #gossip protocol
