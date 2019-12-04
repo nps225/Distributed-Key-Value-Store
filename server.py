@@ -209,12 +209,26 @@ def viewChange():
             temp = (formatResult(requests.put(url,timeout=2, headers={
                 'Content-Type': 'application/json'}, json=data)))
             l.append(temp)
+    time.sleep(1)
+    for node in nodes:
+        if not address == node:
+            url = 'http://' + node + '/kv-store/reshard'
+            temp = (formatResult(requests.put(url,timeout=2, headers={
+                'Content-Type': 'application/json'}, json=data)))
+            l.append(temp)
+    time.sleep(1)
     kv, vc, ts = store.returnTablesDict()
     data["length"] = len(l)
-    reshard(kv,vc,ts)
+    res = reshard(kv,vc,ts)
     # data["count"] = count
     #now we need to update our view
     return make_response(data),200
+
+@app.route('/kv-store/reshard',methods=['PUT'])
+def reshardForward():
+    kv,vc,ts = store.returnTablesDict()
+    res = reshard(kv,vc,ts)
+    return make_response({"lol":res},200)
 
 @app.route('/kv-store/view-change-forward',methods=['PUT'])
 def viewChangeForward():
@@ -224,8 +238,8 @@ def viewChangeForward():
     viewString = ','.join(view)
     h.updateView(viewString)
     h.updateReplicationFactor(str(repl))
-    kv, vc, ts = store.returnTablesDict()
-    reshard(kv,vc,ts)
+    # kv, vc, ts = store.returnTablesDict()
+    # reshard(kv,vc,ts)
     return make_response(data),200
 
 @app.route('/kv-store/view-change/<key>',methods=['PUT'])
@@ -249,14 +263,13 @@ def reshard(kv,vc,ts):
             #now forward the value to the address
             l.append(addresses[0])
             try:
+                store.deleteValue(key)
+                h.decCount()
                 url = 'http://' + addresses[0] + '/kv-store/view-change/' + key
                 temp = (formatResult(requests.put(url,timeout=2, headers={
                             'Content-Type': 'application/json'}, json={"value":"test","causal-context":{"VectorClock":b.get(key),"Timestamp":c.get(key)}})))
-                store.deleteValue(key)
-                h.decCount()
             except:
                 pass
-    time.sleep(1)
                 
     return l
 
