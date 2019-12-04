@@ -67,7 +67,7 @@ def upsertKey(key):
                 vc.compClock(newVC)
             value = data["value"]  # value
             res = store.upsertValue(key, value)
-            vc.incClock()
+            # vc.incClock()
             temp = vc.getClock().copy() # need a copy of our list to prevent change
             store.upsertVC(key,temp)
             store.upsertTimestamp(key,vc.getTimeStamp())
@@ -89,14 +89,14 @@ def upsertKey(key):
             return response
         else:
             #we need to handle if we get a 503 here then we move onto the next request for replica
-            vc.incClock()
+            # vc.incClock()
             for addr in addresses:
                 y = addr
                 url = 'http://' + y + '/kv-store/keys/' + key
                 try:
                     data = request.get_json()
                     data["VectorClock"] = vc.getClock().copy()
-                    temp = (formatResult(requests.put(url,timeout=2, headers={
+                    temp = (formatResult(requests.put(url,timeout=5, headers={
                         'Content-Type': 'application/json'}, json=data)))
 
                     a, b = temp
@@ -316,7 +316,7 @@ def gossip():
                     print(vc.getClock())
                     # res, b = temp
                 except:
-                    print("something bad happened and weeeee don't care!!!")
+                    print("kinda bad happened!!!")
                     pass
 
                     
