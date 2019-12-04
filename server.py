@@ -156,7 +156,7 @@ def getKey(key):
 #Key-Count
 @app.route('/kv-store/key-count', methods=['GET'])
 def keyCount():
-    count = h.getCount()
+    count = len(store.returnStore())
     temp = {
         "message": "Key count retrieved successfully",
         "key-count":count
@@ -261,8 +261,8 @@ def reshard(kv,vc,ts):
         addresses = h.checkHash(key)
         if not address in addresses:
             #now forward the value to the address
-            l.append(addresses[0])
             try:
+                l.append(addresses[0])
                 store.deleteValue(key)
                 h.decCount()
                 url = 'http://' + addresses[0] + '/kv-store/view-change/' + key

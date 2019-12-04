@@ -11,6 +11,8 @@ addr1="10.10.0.2:13800"
 addr2="10.10.0.3:13800"
 addr3="10.10.0.4:13800"
 addr4="10.10.0.5:13800"
+addr5="10.10.0.6:13800"
+addr6="10.10.0.7:13800"
 
 # convenience variables
 initial_full_view="${addr1},${addr2}"
@@ -37,10 +39,24 @@ nohup docker run --name="node3"        --net=kv_subnet     \
            -e REPL_FACTOR="2"                        \
            kv-store:3.0 &
 
-docker run --name="node4"        --net=kv_subnet     \
+nohup docker run --name="node4"        --net=kv_subnet     \
            --ip=10.10.0.5        -p 13805:13800      \
            -e ADDRESS="${addr4}"                     \
            -e VIEW="${addr3},${addr4}"             \
+           -e REPL_FACTOR="2"                        \
+           kv-store:3.0 &
+
+nohup docker run --name="node5"        --net=kv_subnet     \
+           --ip=10.10.0.6        -p 13806:13800      \
+           -e ADDRESS="${addr5}"                     \
+           -e VIEW="${addr5},${addr6}"             \
+           -e REPL_FACTOR="2"                        \
+           kv-store:3.0 &
+
+docker run --name="node6"        --net=kv_subnet     \
+           --ip=10.10.0.7        -p 13807:13800      \
+           -e ADDRESS="${addr6}"                     \
+           -e VIEW="${addr5},${addr6}"             \
            -e REPL_FACTOR="2"                        \
            kv-store:3.0 &
 
