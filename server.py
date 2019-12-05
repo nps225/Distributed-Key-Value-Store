@@ -158,10 +158,11 @@ def getKey(key):
 @app.route('/kv-store/key-count', methods=['GET'])
 def keyCount():
     count = len(store.returnStore())
+    addresses = h.getShard()
     temp = {
             "message": "Key count retrieved successfully",
             "key-count":count,
-            "shard-id":h.getShard(),
+            "shard-id":str(int(h.shard_id) + 1),
             "causal-context":{}
         }
     return make_response(temp),200
@@ -197,11 +198,32 @@ def getShardId(id):
     val = h.getView().copy()
     repl = os.getenv("REPL_FACTOR")
     shardAddresses = val[(((int(id) - 1) * int(repl))):(((((int(id) - 1) * int(repl))  + int(repl))))]
-    response = {
-        "value":shardAddresses
+    if not address in shardAddresses:
+        for i in shardAddresses:
+            #where i forward the the request to a member of that shard
+            y = i
+            url = 'http://' + y + '/kv-store/shards/' + id
+            # now let's grab make our request
+            try:
+                temp = (formatResult(requests.get(url= url,timeout=2, headers={
+                    'Content-Type': 'application/json'})))
+                a,b = temp
+                return make_response(a),b
+            except:
+                pass
+        #handle if the shard is down
+        return make_response({}),503
 
-    }
-    return make_response(response),200
+    else:
+        response = {
+            "message":"Shard information retrieved successfully",
+            "id":id,
+            "replicas":shardAddresses,
+            "key-count":len(store.dict),
+            "causal-context":{}
+        }
+        return make_response(response),200
+
 
 
 @app.route('/kv-store/view-change',methods=['PUT'])
@@ -347,7 +369,7 @@ def formatResult(result):
     result = result.json()
 
     if result != None:
-        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors","timestamps","VectorClock","Timestamp","View"]
+        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors","timestamps","VectorClock","Timestamp","View","replicas","id"]
         result = {k: result[k] for k in jsonKeys if k in result}
 
     else:
