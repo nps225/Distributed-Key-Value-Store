@@ -60,33 +60,28 @@ def upsertKey(key):
         addresses = h.checkHash(key)
         #handle the insert here
         if address in addresses:#if it is at this address
-            if "VectorClock" in data:
-                sentVC = data.get("VectorClock")
-                newVC = VectorClock()
-                newVC.clock = sentVC
-                vc.compClock(newVC)
             value = data["value"]  # value
             res = store.upsertValue(key, value)
-            # vc.incClock()
-            temp = vc.getClock().copy() # need a copy of our list to prevent change
-            store.upsertVC(key,temp)
-            store.upsertTimestamp(key,vc.getTimeStamp())
             if(not res):
                 h.incCount()
-                response = jsonify(
-                    message='Added successfully',
-                    replaced=res
-                ), 201
+                response = {
+                    "message":'Added successfully',
+                    "replaced":res,
+                    "address":address,
+                    "causal-context":{}
+                }
+                return make_response(response),201
 
             if(res):
-                response = jsonify(
-                    message="Updated successfully",
-                    replaced=res
-                ), 200
+                response = {
+                    "message":'Update successfully',
+                    "replaced":res,
+                    "address":address,
+                    "causal-context":{}
+                }
             #insert -> inc our clock
             #gossip here
             #gossipPUT(addresses,key,data)
-            return response
         else:
             #we need to handle if we get a 503 here then we move onto the next request for replica
             # vc.incClock()
@@ -101,11 +96,13 @@ def upsertKey(key):
 
                     a, b = temp
                     #on forward -> inc our clock
-                    return jsonify(
-                        message=a["message"],
-                        replaced=a["replaced"],
-                        address=y
-                    ),b
+                    response =  {
+                        "message":a["message"],
+                        "replaced":a["replaced"],
+                        "address":y,
+                        "causal-context":{}
+                    }
+                    return make_response(response),b
                 except:  # return that main is down
                     pass
                 time.sleep(1)
@@ -123,17 +120,21 @@ def getKey(key):
     if address in addresses:
         exists, val, code = store.getValue(key)
         if(exists):
-            return jsonify(
-                doesExist=exists,
-                message="Retrieved successfully",
-                value=val
-            ), code
+            response = {
+                "doesExist":exists,
+                "message":"Retrieved successfully",
+                "value":val,
+                "causal-context":{}
+            }
+            return make_response(response), code
         else:
-            return jsonify(
-                doesExist=exists,
-                error="Key does not exist",
-                message=val
-            ), code
+            response = {
+                "doesExist":exists,
+                "error":"Key does not exist",
+                "message":val,
+                "causal-context":{}
+            }
+            return make_response(response),code
     else:
         #handle if a node is down
         #this means we need to forward our request
@@ -145,7 +146,7 @@ def getKey(key):
                 'Content-Type': 'application/json'})))
             a,b = temp
             a.update({"address":y})
-            return a,b
+            return make_response(a),b
         except:
             return jsonify(
                 error="Main instance is down",
@@ -158,8 +159,10 @@ def getKey(key):
 def keyCount():
     count = len(store.returnStore())
     temp = {
-        "message": "Key count retrieved successfully",
-        "key-count":count
+            "message": "Key count retrieved successfully",
+            "key-count":count,
+            "shard-id":h.getShard(),
+            "causal-context":{}
         }
     return make_response(temp),200
 
@@ -187,6 +190,18 @@ def getView():
         "REPL":os.getenv("REPL_FACTOR")
         }
     return make_response(temp),200
+
+
+@app.route('/kv-store/shards/<id>',methods=['GET'])
+def getShardId(id):
+    val = h.getView().copy()
+    repl = os.getenv("REPL_FACTOR")
+    shardAddresses = val[(((int(id) - 1) * int(repl))):(((((int(id) - 1) * int(repl))  + int(repl))))]
+    response = {
+        "value":shardAddresses
+
+    }
+    return make_response(response),200
 
 
 @app.route('/kv-store/view-change',methods=['PUT'])
@@ -345,8 +360,8 @@ def formatResult(result):
 if __name__ == '__main__':
     num_keys = 0 #number of keys in our key-value store
     #app.config['JSON_SORT_KEYS'] = False
-    threading = threading.Thread(target=gossip)
-    threading.start()
+    # threading = threading.Thread(target=gossip)
+    # threading.start()
     #second thread to handle the view sync? -- try in regular gossip -> try here if it is too laggy
     # threading2 = threading.Thread(target=gossip2)
     # threading2.start()

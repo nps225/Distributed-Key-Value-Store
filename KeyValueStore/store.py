@@ -126,8 +126,8 @@ class Store:
         else:# we do not match so now check every key
             for i in store.keys():
                 #all our reference variables
-                clockVal = clock.get(i)
-                timestamp = timestamps.get(i)
+               #  clockVal = clock.get(i)
+               #  timestamp = timestamps.get(i)
                 value = store.get(i)
                 ##COMPARISON STARTS HERE
                 #first check if the key is supposed to be here or not
@@ -141,47 +141,49 @@ class Store:
                      #if not we must add it in
                      if(self.dict.get(i) == None):
                            self.dict[i] = value
-                           self.clock[i] = clockVal
-                           self.timestamps[i] = timestamp
+                           # self.clock[i] = clockVal
+                           # self.timestamps[i] = timestamp
                      elif(self.dict.get(i) != value):
                            #values are different -> compare vector clocks
-                           sum0 = sum(self.clock[i])
-                           sum1 = sum(clockVal)
-                           #now compare the clock values
-                           #do nothing if we have the higher val
-                           #else ...
-                           if(sum0 < sum1):
-                              self.dict[i] = value
-                              self.clock[i] = clockVal
-                              self.timestamps[i] = timestamp
-                           else: # we must be even in our sums so compare the timestamps
-                              #do nothing if we have the higher timestamp
-                              #else...
-                              ts0 = self.timestamps[i]
-                              ts1 = timestamps[i]
-                              if(ts0 < ts1):
-                                 self.dict[i] = value
-                                 self.clock[i] = clockVal
-                                 self.timestamps[i] = timestamp
-                  else:#if the values are equal compare the vector clocks and make sure we have the latest
-                     sum0 = sum(self.clock[i])
-                     sum1 = sum(clockVal)
-                     #now compare the clock values
-                     #do nothing if we have the higher val
-                     #else ...
-                     if(sum0 < sum1):
                            self.dict[i] = value
-                           self.clock[i] = clockVal
-                           self.timestamps[i] = timestamp
-                     else: # we must be even in our sums so compare the timestamps
-                           #do nothing if we have the higher timestamp
-                           #else...
-                           ts0 = self.timestamps[i]
-                           ts1 = timestamps[i]
-                           if(ts0 < ts1):
-                              self.dict[i] = value
-                              self.clock[i] = clockVal
-                              self.timestamps[i] = timestamp
+                           # sum0 = sum(self.clock[i])
+                           # sum1 = sum(clockVal)
+                           # #now compare the clock values
+                           # #do nothing if we have the higher val
+                           # #else ...
+                           # if(sum0 < sum1):
+                           #    self.dict[i] = value
+                           #    self.clock[i] = clockVal
+                           #    self.timestamps[i] = timestamp
+                           # else: # we must be even in our sums so compare the timestamps
+                           #    #do nothing if we have the higher timestamp
+                           #    #else...
+                           #    ts0 = self.timestamps[i]
+                           #    ts1 = timestamps[i]
+                           #    if(ts0 < ts1):
+                           #       self.dict[i] = value
+                           #       self.clock[i] = clockVal
+                           #       self.timestamps[i] = timestamp
+                  else:#if the values are equal compare the vector clocks and make sure we have the latest
+                     # sum0 = sum(self.clock[i])
+                     # sum1 = sum(clockVal)
+                     # #now compare the clock values
+                     # #do nothing if we have the higher val
+                     # #else ...
+                     # if(sum0 < sum1):
+                     #       self.dict[i] = value
+                     #       self.clock[i] = clockVal
+                     #       self.timestamps[i] = timestamp
+                     # else: # we must be even in our sums so compare the timestamps
+                     #       #do nothing if we have the higher timestamp
+                     #       #else...
+                     #       ts0 = self.timestamps[i]
+                     #       ts1 = timestamps[i]
+                     #       if(ts0 < ts1):
+                     #          self.dict[i] = value
+                     #          self.clock[i] = clockVal
+                     #          self.timestamps[i] = timestamp
+                     self.dict[i] = value
 
                         
 
