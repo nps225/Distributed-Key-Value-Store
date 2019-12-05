@@ -30,6 +30,7 @@ class Hash:
       return addresses
    
    def getShard(self):
+     self.shard_id = str(int((os.getenv("VIEW").replace("\"","").split(",").index(os.getenv("ADDRESS")))/int(os.getenv("REPL_FACTOR"))))
      f = int(self.shard_id)
      rep = int(os.getenv("REPL_FACTOR"))
      index = f * rep
@@ -66,3 +67,7 @@ class Hash:
       # assume the views are not wrong and durable from the user
       os.environ["VIEW"] = updateView
       return os.environ["VIEW"].split(",")
+
+   def updateReplicationFactor(self,updateFactor):
+      os.environ["REPL_FACTOR"] = updateFactor
+      return os.environ["REPL_FACTOR"]
