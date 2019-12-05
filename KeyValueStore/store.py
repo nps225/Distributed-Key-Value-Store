@@ -118,7 +118,10 @@ class Store:
 #             if(self.dict.get(i) != store.get(i)):
 #                self.dict[i] = store[i]
 #          return False
+
+#FOR THE VECTOR CLOCK
    def comparison(self,store,clock,timestamps):
+       #if the vector clocks are the same
         if(self.dict == store and self.clock == clock):
             return True
         else:# we do not match so now check every key

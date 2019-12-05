@@ -1,5 +1,4 @@
 cruzid	Description of Contribution
-fasaeed	Worked on and debugged main/follower part
-mjpon	Worked on and debugged main/follower part
-npsheth	Worked on making key store,debugging the first REST stuff and helped with main/follower
-gvquach	Worked on REST andhelped a little with main/follwer
+fasaeed	Worked on View Change, key counts. and helped debug the code
+mjpon	Assisted on view change, debugged the code, documentation as well, repairing key counts
+npsheth	Worked on view change, resharding value, key counts, and getting everything to work.
