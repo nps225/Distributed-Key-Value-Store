@@ -47,3 +47,57 @@
 
 
 # print("i am here")
+
+import datetime
+
+clock1 = {
+  "node1":2,
+  "node3":3,
+  "node2":4,
+  "ts": datetime.datetime.now()
+}
+
+clock2 = {
+  "node2":2,
+  "node1":3,
+  "node3":2,
+  "ts": datetime.datetime.now()
+}
+
+# print(clock1["ts"] < clock2["ts"])
+
+
+def compareClocks(clock1, clock2):
+  clock1Win = 0
+  clock2Win = 0
+  l = list(set(clock1.keys()) | set(clock2.keys()))
+  #take away the timestamp from our list
+  l.remove("ts")
+  for i in l:
+    clock1Val = clock1.get(i)
+    clock2Val = clock2.get(i)
+    #now check if any values are none
+    if(clock1Val == None):
+      clock2Win += 1
+    elif(clock2Val == None):
+      clock1Win += 1
+    elif(clock1Val > clock2Val):
+      clock1Win += 1
+    elif(clock1Val < clock2Val):
+      clock2Win += 1
+  #now lets figure out which clock should win
+  if(clock1Win == clock2Win or clock1Win > 0 and clock2Win > 0):
+    if(clock1["ts"] > clock2["ts"]):
+      return True
+    else:
+      return False
+  elif(clock1Win == 0):
+    return True
+  else:#clock2Win == 0"
+    return False
+
+
+
+
+
+print(compareClocks(clock1,clock2))
