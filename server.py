@@ -35,7 +35,7 @@ h = Hash()# you can check which shard you are in + it will return you a forwardi
 
 #init our VC
 vc = VectorClock()
-
+clock = 0
 #UPSERT
 @app.route('/kv-store/keys/<key>', methods=['PUT'])
 def upsertKey(key):
@@ -43,15 +43,21 @@ def upsertKey(key):
     data = request.get_json()
     
     if len(key) > 50:
-        return jsonify(
-            error="Key is too long",
-            message="Error in PUT"
-        ), 400
+        response =  {
+                        "error":"Key is too long",
+                        "message":"Error in PUT",
+                        "address":address,
+                        "causal-context":{}
+        }
+        return make_response(response), 400
     if 'value' not in data:
-        return jsonify(
-            error="Value is missing",
-            message="Error in PUT"
-        ), 400
+        response =  {
+                        "error":"Value is missing",
+                        "message":"Error in PUT",
+                        "address":address,
+                        "causal-context":{}
+        }
+        return make_response(response), 400
     else:  # else for readability?
         #first check if there is a VectorClock attached
         # make the request to the key value store
@@ -60,9 +66,13 @@ def upsertKey(key):
         addresses = h.checkHash(key)
         #handle the insert here
         if address in addresses:#if it is at this address
+            #here we should implement our incrementation of our clock
+            clock = clock + 1
             value = data["value"]  # value
+            causal = data["causal-context"]
             res = store.upsertValue(key, value)
             if(not res):
+                #no previous value exists -> handled easily
                 h.incCount()
                 response = {
                     "message":'Added successfully',
@@ -73,12 +83,15 @@ def upsertKey(key):
                 return make_response(response),201
 
             if(res):
+                #we need to compare the clocks to ensure we have causality
                 response = {
                     "message":'Update successfully',
                     "replaced":res,
                     "address":address,
                     "causal-context":{}
                 }
+                return make_response(response),200
+
             #insert -> inc our clock
             #gossip here
             #gossipPUT(addresses,key,data)
@@ -90,8 +103,7 @@ def upsertKey(key):
                 url = 'http://' + y + '/kv-store/keys/' + key
                 try:
                     data = request.get_json()
-                    data["VectorClock"] = vc.getClock().copy()
-                    temp = (formatResult(requests.put(url,timeout=5, headers={
+                    temp = (formatResult(requests.put(url,timeout=2, headers={
                         'Content-Type': 'application/json'}, json=data)))
 
                     a, b = temp
@@ -107,11 +119,13 @@ def upsertKey(key):
                     pass
                 time.sleep(1)
             
-            return jsonify(
-                        error="instance is down",
-                        message="Error in PUT",
-                        address = addresses
-                    ), 503
+            response =  {
+                        "error":"instance is down",
+                        "message":"Error in PUT",
+                        "address":addresses,
+                        "causal-context":{}
+            }
+            return make_response(response), 503
 
 # GET KEY IMPLEMENTATION
 @app.route('/kv-store/keys/<key>', methods=['GET'])
@@ -124,6 +138,7 @@ def getKey(key):
                 "doesExist":exists,
                 "message":"Retrieved successfully",
                 "value":val,
+                "address":address,
                 "causal-context":{}
             }
             return make_response(response), code
@@ -132,6 +147,7 @@ def getKey(key):
                 "doesExist":exists,
                 "error":"Key does not exist",
                 "message":val,
+                "address":address,
                 "causal-context":{}
             }
             return make_response(response),code
@@ -145,23 +161,27 @@ def getKey(key):
             temp = (formatResult(requests.get(url= url,timeout=2, headers={
                 'Content-Type': 'application/json'})))
             a,b = temp
-            a.update({"address":y})
+            # a.update({"address":y})
+            #dont for get causal-context here
             return make_response(a),b
         except:
-            return jsonify(
-                error="Main instance is down",
-                message="Error in GET",
-                address = y
-            ), 503
+            response = {
+                "error":"Main instance is down",
+                "message":"Error in GET",
+                "address":y,
+                "causal-context":{}
+            }
+            return make_response(response), 503
 
 #Key-Count
 @app.route('/kv-store/key-count', methods=['GET'])
 def keyCount():
     count = len(store.returnStore())
+    addresses = h.getShard()
     temp = {
             "message": "Key count retrieved successfully",
             "key-count":count,
-            "shard-id":h.getShard(),
+            "shard-id":str(int(h.shard_id) + 1),
             "causal-context":{}
         }
     return make_response(temp),200
@@ -197,11 +217,44 @@ def getShardId(id):
     val = h.getView().copy()
     repl = os.getenv("REPL_FACTOR")
     shardAddresses = val[(((int(id) - 1) * int(repl))):(((((int(id) - 1) * int(repl))  + int(repl))))]
-    response = {
-        "value":shardAddresses
+    if not address in shardAddresses:
+        for i in shardAddresses:
+            #where i forward the the request to a member of that shard
+            y = i
+            url = 'http://' + y + '/kv-store/shards/' + id
+            # now let's grab make our request
+            try:
+                temp = (formatResult(requests.get(url= url,timeout=2, headers={
+                    'Content-Type': 'application/json'})))
+                a,b = temp
+                return make_response(a),b
+            except:
+                pass
+        #handle if the shard is down
+        return make_response({}),503
 
-    }
+    else:
+        response = {
+            "message":"Shard information retrieved successfully",
+            "shard-id":id,
+            "replicas":shardAddresses,
+            "key-count":len(store.dict),
+            "causal-context":{}
+        }
+        return make_response(response),200
+
+@app.route('/kv-store/shards',methods=['GET'])
+def getShard():
+    response = {}
+    response["message"] = "Shard membership retrieved successfully"
+    response["causal-context"] = {}
+    response["shards"] = []
+    numOfShard = int(len(h.getView())/int(os.getenv("REPL_FACTOR")))
+    for i in range(1,numOfShard+1):
+        response["shards"].append(str(i))
+
     return make_response(response),200
+
 
 
 @app.route('/kv-store/view-change',methods=['PUT'])
@@ -235,6 +288,14 @@ def viewChange():
     kv, vc, ts = store.returnTablesDict()
     data["length"] = len(l)
     res = reshard(kv,vc,ts)
+    #now that reshard is done lets proceed to return the shard infos
+    response = {}
+    response["message"] = "View change successful",
+    response["causal-context"] = {}
+    response["shards"] : []
+    numOfShards = len(h.getView())/os.getenv("REPL_FACTOR")
+    #return shards
+
     # data["count"] = count
     #now we need to update our view
     return make_response(data),200
@@ -347,7 +408,7 @@ def formatResult(result):
     result = result.json()
 
     if result != None:
-        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors","timestamps","VectorClock","Timestamp","View"]
+        jsonKeys = ["message", "replaced", "error", "doesExist", "value", "address", "key-count", "shards","values","vectors","timestamps","VectorClock","Timestamp","View","replicas","id","shard-id","causal-context"]
         result = {k: result[k] for k in jsonKeys if k in result}
 
     else:

@@ -1,0 +1,43 @@
+ * Serving Flask app "server" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Running on http://0.0.0.0:13800/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Serving Flask app "server" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Running on http://0.0.0.0:13800/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Serving Flask app "server" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Running on http://0.0.0.0:13800/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Serving Flask app "server" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Running on http://0.0.0.0:13800/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 171-101-595
+ * Debugger is active!
+ * Debugger PIN: 289-547-984
+ * Debugger is active!
+ * Debugger PIN: 951-996-498
+ * Debugger is active!
+ * Debugger PIN: 292-553-031
+10.10.0.1 - - [06/Dec/2019 06:13:05] "GET /kv-store/key-count HTTP/1.1" 200 -
+10.10.0.1 - - [06/Dec/2019 06:13:06] "GET /kv-store/key-count HTTP/1.1" 200 -
+10.10.0.1 - - [06/Dec/2019 06:13:10] "GET /kv-store/key-count HTTP/1.1" 200 -
+10.10.0.1 - - [06/Dec/2019 06:13:14] "GET /kv-store/key-count HTTP/1.1" 200 -
+10.10.0.1 - - [06/Dec/2019 06:13:17] "GET /kv-store/key-count HTTP/1.1" 200 -
+10.10.0.1 - - [06/Dec/2019 06:15:44] "GET /kv-store/shards HTTP/1.1" 200 -
+10.10.0.1 - - [06/Dec/2019 06:20:06] "GET /kv-store/shards HTTP/1.1" 200 -
