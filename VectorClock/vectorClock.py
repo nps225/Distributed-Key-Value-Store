@@ -1,127 +1,49 @@
 import os
-from datetime import datetime
+import datetime
 
-class VectorClock:
-
-    def __init__(self):
-        self.view = os.getenv("VIEW").split(",")
-        self.clock = [0 for i in range(len(self.view))]
-        self.timeStamp = datetime.timestamp(datetime.now())
-
-   #  def updateClock(self, newView):
-   #      oldLen = len(self.view)
-   #      view = newView.split(",")
-   #      os.environ["VIEW"] = newView
-   #      self.view = os.getenv("VIEW").split(",")
-   #      counter = len(view) - oldLen
-   #      print(counter)
-   #      if self.clock != None:
-   #          newClock = []
-   #          for val in self.clock:
-   #              newClock.append(val)
-            
-   #          while counter != 0:
-   #              newClock.append(0)
-   #              counter-=1
-   #      else:
-   #          while counter != 0:
-   #              newClock.append(0)
-   #              counter-=1
-        
-   #      self.clock = newClock
-   #      self.timeStamp = datetime.timestamp(datetime.now())
-    def assignClock(self,clock):
-       self.clock = clock
-       return self.clock
-
-    def getClock(self):
-        return self.clock
-
-    def getView(self):
-        return self.view
-
-    def getTimeStamp(self):
-        self.timeStamp = datetime.timestamp(datetime.now())
-        return self.timeStamp
-
-#for doing a send/recieve
-    def incClock(self):
-      addr = os.getenv("ADDRESS")
-      index = os.getenv("VIEW").replace("\"","").split(",").index(addr)
-      self.clock[index] = self.clock[index] + 1
-      self.timeStamp = datetime.timestamp(datetime.now())
-      return self.clock
+def compareClocksPUT(clock1, clock2):
+  clock1Win = 0
+  clock2Win = 0
+  l = list(set(clock1.keys()) | set(clock2.keys()))
+  #take away the timestamp from our list
+  l.remove("ts")
+  for i in l:
+    clock1Val = clock1.get(i)
+    clock2Val = clock2.get(i)
+    #now check if any values are none
+    if(clock1Val == None):
+      clock2Win += 1
+    elif(clock2Val == None):
+      clock1Win += 1
+    elif(clock1Val > clock2Val):
+      clock1Win += 1
+    elif(clock1Val < clock2Val):
+      clock2Win += 1
+  #now lets figure out which clock should win
+  if(clock1Win == clock2Win or (clock1Win > 0 and clock2Win > 0)):
+    if(clock1["ts"] > clock2["ts"]):
+      return True
+    else:
+      return False
+  elif(clock1Win == 0):
+    return False
+  else:#clock2Win == 0"
+    return True
 
 
-    def incClockIdx(self, i):
-        if i < len(self.view):
-            self.clock[i]+=1
-            self.timeStamp = datetime.timestamp(datetime.now())
-            return 'Succ'
-        else:
-            return 'Not Allowed'
+def updateClock(clock,value):
+  address = os.getenv("ADDRESS")
+  clock[address] = value
+  clock["ts"] = datetime.datetime.now().timestamp()
+  return clock
 
 
-    #should we change timestamp to new timestamp or newest nodes timestamp?
-    def setClockidx(self, i, val):
-        if i < len(self.view):
-            self.clock[i] = val
-            self.timeStamp = datetime.timestamp(datetime.now())
-            return 'Succ'
-        else:
-            return 'Not Allowed'
-
-#for recieve, self is the recieving node and vClck is the one that did the send!
-#if vc is same during gossip, compare the timestamps and set vc as so
-    def compClock(self, vClck):
-       #this is a bit more complicated since if we reshard so keep in mind this
-        clock0 = self.getClock()
-        clock1 = vClck.getClock()
-        if clock1 != clock0:
-            for i in range(len(clock0)):
-                clock0[i] = max(clock0[i], clock1[i])
-        else:
-            stamp0 = self.getTimeStamp()
-            stamp1 = vClck.getTimeStamp()
-            if stamp0 < stamp1:
-                clock0 = clock1
-
-        
-        self.clock = clock0
-        return self.clock
-
-        
-
-        
-    # #self being node on the recieving end of gossip, vClck for sending node of gossip, st1 for receiving and st2 for sending
-    # def gossipClock(self, vClck, st1, st2):
-    #     #1. if store is same as current dict (nuse Nikhils function in store)
-    #     #2. iterate through every single key of the reciving node of the gossip
-    #         #2a. check if key is in both and then check if vc is the same, if same then continue check
-    #         #2b. check if non existent key, add it to our keystore
-    #     #3. if it passed through 2 without doing shit, then check timestamps
-
-    #     if st1.comparison 
-    #     if clock0 != clock1:
-    #         print('yeet')
-
-    #     else:
-    #         stamp0 = self.getTimeStamp()
-    #         stamp1 = vClck.getTimeStamp()
-    #         if stamp0 < stamp1:
-    #             clock0 = clock1
-
-        
-    #     self.clock = clock0
-
-
-
-
-
-
-
-    
-
-        
-
-
+def maxClock(clock1,clock2):
+    l = list(set(clock1.keys()) | set(clock2.keys()))
+    clock3 = {}
+    for val in l:
+        clock1Val = clock1.get(val) or 0
+        clock2Val = clock2.get(val) or 0
+        newVal = max(clock1Val,clock2Val)
+        clock3[val] = newVal
+    return clock3
