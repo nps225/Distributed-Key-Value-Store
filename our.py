@@ -5,6 +5,7 @@ import time
 
 
 #start off with empyt causal context
+c0 = {}
 c1 = {}
 c2 = {}
 
@@ -46,11 +47,11 @@ def formatResult(result):
     return result, status_code
 
 
-##HERE IS WHERE OUR TESTS WILL GO
-data = {"value":"2","causal-context":c1}
-c1 = simplePUT(13802,"a",data)
-print(c1)
-data = {"value":"1","causal-context":c1}
+# ##HERE IS WHERE OUR TESTS WILL GO
+data = {"value":"2","causal-context":c0}
+c0 = simplePUT(13802,"a",data)
+print(c0)
+data = {"value":"1","causal-context":c0}
 c1 = simplePUT(13802,"b",data)
 print(c1)
 data = {"value":"1000000","causal-context":c1}
@@ -59,7 +60,19 @@ print(c1)
 data = {"value":"works","causal-context":c1}
 c1 = simplePUT(13802,"c",data)
 print(c1)
-data = {"value":"this should work","causal-context":c1}
-c1 = simplePUT(13803,"d",data)
+
+data = {"value": "2", "causal-context":c0}
+
+c1 = simpleGET(13802, "a", data)
 print(c1)
+
+data = {"value":"3","causal-context":c0}
+c1 = simplePUT(13802,"c",data)
+print(c1)
+
+data = {"value": "3", "causal-context":c0}
+
+c1 = simpleGET(13802, "c", data)
+print(c1)
+
 
