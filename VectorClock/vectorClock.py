@@ -46,4 +46,5 @@ def maxClock(clock1,clock2):
         clock2Val = clock2.get(val) or 0
         newVal = max(clock1Val,clock2Val)
         clock3[val] = newVal
+    clock3["ts"] = datetime.datetime.now().timestamp()
     return clock3

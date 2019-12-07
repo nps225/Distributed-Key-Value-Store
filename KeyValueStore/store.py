@@ -38,7 +38,7 @@ class Store:
    #        technically server should stop errors before it is even placed
    #        in key value store
    # this function should be implemented for updates as well
-   def upsertValue(self, key, value,newClock):
+   def upsertValue(self, key, value, newClock):
       # check to see if key exists
       exists = key in self.dict
       # place the value/new value
@@ -55,6 +55,7 @@ class Store:
          else:
             self.dict[key] = value
             clock3 = Clock.maxClock(currentClock,newClock)
+            self.clock[key] = clock3
             return exists,clock3
 
 
@@ -126,9 +127,6 @@ class Store:
 
 
    def comparison(self,store,clock):
-        if(self.dict == store and self.clock == clock):
-            return True
-        else:# we do not match so now check every key
             for i in store.keys():
                 #all our reference variables
                #  clockVal = clock.get(i)
@@ -141,26 +139,19 @@ class Store:
                 address = os.getenv("ADDRESS")
                 if(address in addresses):
                   #only time we care is if the values are different
-                  if((self.dict.get(i) != value)):
                      #check first if the value exists
                      #if not we must add it in
                      if(self.dict.get(i) == None):
+                           print("here")
                            self.dict[i] = value
                            self.clock[i] = clock.get(i)
-                     elif(self.dict.get(i) != value):
+                     else:
+                           print("hi")
                            #values are different -> compare vector clocks
                            clock1 = self.clock.get(i)
                            clock2 = clock.get(i)
                            res = Clock.compareClocksPUT(clock1,clock2)
                            if(not res):#true means new value higher than last so replace
                               self.dict[i] = value
-                              clock3 = Clock.maxClock(clock1,clock2)
-                              self.clock[i] = clock3
-                  else:
-                     self.dict[i] = value
-                     self.clock[i] = clock.get(i)
-
-                        
-
-        
-        return self.returnTablesDict()
+                              self.clock[i] = clock2
+            return self.returnTablesDict()

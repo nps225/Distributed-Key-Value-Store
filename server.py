@@ -292,7 +292,7 @@ def viewChange():
     #now that reshard is done lets proceed to return the shard infos
     response = {}
     response["message"] = "View change successful",
-    response["causal-context"] = {}
+    response["causal-context"] = data["causal-context"]
     response["shards"] : []
     numOfShards = len(h.getView())/os.getenv("REPL_FACTOR")
     #return shards
@@ -342,7 +342,7 @@ def reshard(kv,vc,ts):
                 h.decCount()
                 url = 'http://' + addresses[0] + '/kv-store/view-change/' + key
                 temp = (formatResult(requests.put(url,timeout=2, headers={
-                            'Content-Type': 'application/json'}, json={"value":"test","causal-context":data["causal-context"]})))
+                            'Content-Type': 'application/json'}, json={"value":a[key],"causal-context":b[key]})))
             except:
                 pass
                 

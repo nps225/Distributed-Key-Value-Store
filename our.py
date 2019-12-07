@@ -53,6 +53,13 @@ print(c1)
 data = {"value":"1","causal-context":c1}
 c1 = simplePUT(13802,"b",data)
 print(c1)
-data = {"value":"1","causal-context":c1}
+data = {"value":"1000000","causal-context":c1}
 c1 = simplePUT(13804,"a",data)
 print(c1)
+data = {"value":"works","causal-context":c1}
+c1 = simplePUT(13802,"c",data)
+print(c1)
+data = {"value":"this should work","causal-context":c1}
+c1 = simplePUT(13803,"d",data)
+print(c1)
+
