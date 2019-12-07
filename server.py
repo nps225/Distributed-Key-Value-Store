@@ -215,6 +215,7 @@ def getView():
 
 @app.route('/kv-store/shards/<id>',methods=['GET'])
 def getShardId(id):
+    data = request.get_json()
     val = h.getView().copy()
     repl = os.getenv("REPL_FACTOR")
     shardAddresses = val[(((int(id) - 1) * int(repl))):(((((int(id) - 1) * int(repl))  + int(repl))))]
@@ -226,12 +227,14 @@ def getShardId(id):
             # now let's grab make our request
             try:
                 temp = (formatResult(requests.get(url= url,timeout=2, headers={
-                    'Content-Type': 'application/json'})))
+                    'Content-Type': 'application/json'},json=data)))
                 a,b = temp
+                # a.update({"causal-context":data["causal-context"]})
                 return make_response(a),b
             except:
                 pass
         #handle if the shard is down
+        #idk what to respond
         return make_response({}),503
 
     else:
@@ -240,9 +243,10 @@ def getShardId(id):
             "shard-id":id,
             "replicas":shardAddresses,
             "key-count":len(store.dict),
-            "causal-context":{}
+            "causal-context": data["causal-context"]
         }
         return make_response(response),200
+
 
 @app.route('/kv-store/shards',methods=['GET'])
 def getShard():
@@ -290,16 +294,29 @@ def viewChange():
     data["length"] = len(l)
     res = reshard(kv,vc,ts)
     #now that reshard is done lets proceed to return the shard infos
-    response = {}
-    response["message"] = "View change successful",
-    response["causal-context"] = data["causal-context"]
-    response["shards"] : []
-    numOfShards = len(h.getView())/int(os.getenv("REPL_FACTOR"))
+    numOfShards = int(len(h.getView())/int(os.getenv("REPL_FACTOR")))
     #return shards
+    l = []
+    for i in range(1,numOfShards + 1):
+        try:
+                url = 'http://' + address + '/kv-store/shards/' + str(i)
+                temp = (formatResult(requests.get(url,timeout=2, headers={
+                            'Content-Type': 'application/json'}, json=data)))
+                a,b = temp
+                l.append(a)
+        except:
+                pass
 
+    response = {
+        "message":"View change successful",
+        "causal-context":data["causal-context"],
+        "shards":l
+    }
+
+    time.sleep(1)
     # data["count"] = count
     #now we need to update our view
-    return make_response(data),200
+    return make_response(response),200
 
 @app.route('/kv-store/reshard',methods=['PUT'])
 def reshardForward():
