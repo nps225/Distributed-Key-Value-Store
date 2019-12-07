@@ -8,9 +8,8 @@ import datetime
 # print(datetime.datetime.now().timestamp())
 # print(datetime.datetime.now().timestamp())
 c1 = {'10.10.0.4:13800': 1, 'ts': datetime.datetime.now().timestamp()}
-c2 = {'10.10.0.2:13800': 1, '10.10.0.4:13800': 1, 'ts': datetime.datetime.now().timestamp()}
+c2 = {'10.10.0.4:13800': 1, 'ts': datetime.datetime.now().timestamp()}
 print(c1)
 print(c2)
-print(c1)
 
 print(Clock.compareClocksPUT(c1,c2))

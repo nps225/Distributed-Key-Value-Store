@@ -1,5 +1,6 @@
 # key-value store class
 import os
+import VectorClock.vectorClock as Clock
 class Store:
    dict
 
@@ -37,11 +38,12 @@ class Store:
    #        technically server should stop errors before it is even placed
    #        in key value store
    # this function should be implemented for updates as well
-   def upsertValue(self, key, value):
+   def upsertValue(self, key, value,clock):
       # check to see if key exists
       exists = key in self.dict
       # place the value/new value
-      self.dict[key] = value
+      if not exists:
+         self.dict[key] = value
       return exists
 
    # Grabs the vector clock

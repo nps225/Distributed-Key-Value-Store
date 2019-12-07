@@ -41,13 +41,14 @@ clock = 0
 def upsertKey(key):
     #first step is to check if we need to forward our address
     data = request.get_json()
-    
+    global clock
+    causal = data["causal-context"]
     if len(key) > 50:
         response =  {
                         "error":"Key is too long",
                         "message":"Error in PUT",
                         "address":address,
-                        "causal-context":{}
+                        "causal-context":causal
         }
         return make_response(response), 400
     if 'value' not in data:
@@ -55,7 +56,7 @@ def upsertKey(key):
                         "error":"Value is missing",
                         "message":"Error in PUT",
                         "address":address,
-                        "causal-context":{}
+                        "causal-context":causal
         }
         return make_response(response), 400
     else:  # else for readability?
