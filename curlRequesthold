@@ -7,6 +7,13 @@ curl --request PUT \
 --data '{"view":"10.10.0.2:13800,10.10.0.3:13800}' \
         http://localhost:13802/kv-store/view-change
 
+curl --request PUT \
+--header "Content-Type: application/json" \
+--write-out "%{http_code}\n" \
+--data  '{"view": ["10.10.0.2:13800","10.10.0.3:13800","10.10.0.4:13800","10.10.0.5:13800"],"repl-factor": 2,"causal-context":{}}' \
+        http://localhost:13802/kv-store/view-change
+
+curl --request PUT --header "Content-Type: application/json" --write-out "%{http_code}\n" --data '{"value": "sampleValue", "causal-context":{}}' http://127.0.0.1:13803/kv-store/keys/sampleKey
 
 
 #############Put Requests#############
@@ -14,8 +21,8 @@ curl --request PUT \
 curl --request PUT \
 --header "Content-Type: application/json" \
 --write-out "%{http_code}\n" \
---data '{"value": "sampleValue"}' \
-http://127.0.0.1:13801/kv-store/sampleKey
+--data '{"value": "sampleValue", "causal-context":{}}' \
+http://127.0.0.1:13801/kv-store/keys/sampleKey
 
 curl --request   PUT--header \ 
 "Content-Type: application/json"                      --data      '{"view": ["10.10.0.2:13800","10.10.0.3:13800","10.10.0.4:13800","10.10.0.5:13800"],"repl-factor": 2,"causal-context":{}}'      --write-out "%{http_code}\n" 
@@ -66,10 +73,17 @@ http://127.0.0.1:13800/kv-store/sampleKey
 
 #######Get Resquests####
 
-curl --request PUT \
+curl --request GET \
 --header "Content-Type: application/json" \
 --write-out "%{http_code}\n" \
---data '{"value": "sampleValue"}' \
-http://127.0.0.1:13800/kv-store/sampleKey
+--data '{"value": "sampleValue", "causal-context":{}}'  \
+http://127.0.0.1:13800/kv-store/keys/sampleKey
 {"message":"Added successfully","replaced":false}
 201
+
+
+curl --request GET \
+--header "Content-Type: application/json" \
+--write-out "%{http_code}\n" \
+--data '{"value": "sampleValue", "causal-context":{"10.10.0.2:13800":1}}'  \
+http://127.0.0.1:13800/kv-store/keys/sampleKey

@@ -77,12 +77,21 @@ class Store:
    # a = false
    # b = "Key does not exist"
    # c = 404
-   def getValue(self, key):
+   def getValue(self, key, newClock):
       exists = key in self.dict
       # if it is present
       if(exists):
-         code = 200
-         value = self.dict[key]
+         # print(self.clock[key], "HAMMOND YOU IDIOT")
+         # check to see if the context is out of date
+         i = 0
+         for item in newClock:
+            if(item[1] < self.clock.get(i)[1]):
+               code = 503
+               value = "Error in GET" 
+            if(item[1] >= self.clock[i][1]):
+               code = 200
+               value = self.dict[key]
+            i+=1
       else:
          # if it isn't present
          code = 404

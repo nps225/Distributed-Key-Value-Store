@@ -141,7 +141,21 @@ def getKey(key):
         causal = {}
     addresses = h.checkHash(key)
     if address in addresses:
-        exists, val, code = store.getValue(key)
+        # almost forgot to check the clock lol
+        exists, val, code = store.getValue(key, causal)
+
+        # well if the context is not there
+        if (code == 503):
+            response = {
+                "doesExist":exists,
+                "message":"Unable to satisfy request",
+                "value":val,
+                "address":address,
+                "causal-context":causal
+            }
+            return make_response(response), code
+
+
         if(exists):
             response = {
                 "doesExist":exists,
@@ -151,6 +165,7 @@ def getKey(key):
                 "causal-context":causal
             }
             return make_response(response), code
+            
         else:
             response = {
                 "doesExist":exists,

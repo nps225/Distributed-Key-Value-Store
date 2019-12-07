@@ -29,7 +29,7 @@ def simpleGET(port,value,data):
    a,b = temp
 #    print(a)
 #    print(b)
-   return a.get("causal-context")
+   return a,b
 
 #helper function
 def formatResult(result):
@@ -70,9 +70,9 @@ data = {"value":"3","causal-context":c0}
 c1 = simplePUT(13802,"c",data)
 print(c1)
 
-data = {"value": "3", "causal-context":c0}
+data = {"value": "3", "causal-context":{'10.10.0.2:13800': 1, '10.10.0.4:13800': 3, 'ts': 1575747976.210588}}
 
-c1 = simpleGET(13802, "c", data)
+c1 = simpleGET(13802, "fsefse", data)
 print(c1)
 
 
