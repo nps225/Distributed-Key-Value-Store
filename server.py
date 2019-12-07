@@ -80,7 +80,7 @@ def upsertKey(key):
                    "message":"Error in GET",
                    "address":address
                 }
-                return make_response({"causal-context":clock3}),404
+                return make_response({"causal-context":clock3}),503
 
             if(not res):
                 #no previous value exists -> handled easily
