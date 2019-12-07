@@ -196,7 +196,7 @@ def keyCount():
 def getStore():
     values,vectors,timestamps = store.returnTablesDict()
     temp = {
-        "message": "Key count retrieved successfully",
+        "message": "Returned table",
         "values":values,
         "vectors":vectors
         }
@@ -349,7 +349,7 @@ def reshard(kv,vc,ts):
     return l
 
 #gossip protocol
-#
+#DONT MESS WITH CLOCKS HERE
 def gossip():
     #I want to gossip every second to ensure I have the latest data
     
@@ -366,7 +366,7 @@ def gossip():
                     temp = (formatResult(requests.get(url,timeout=2, headers={
                     'Content-Type': 'application/json'})))
                     res,b = temp
-                    store.comparison(res["values"],res["vectors"],res["timestamps"])
+                    store.comparison(res["values"],res["vectors"])
                     #now update our vector clock with the correct values
                     # res, b = temp
                 except:
@@ -380,8 +380,7 @@ def gossip():
                     temp = (formatResult(requests.get(url,timeout=2, headers={
                     'Content-Type': 'application/json'})))
                     res,b = temp
-                    #now update our vector clock with the correct values
-                    # res, b = temp
+                    
                 except:
                     print("kinda bad happened!!!")
                     pass
@@ -412,8 +411,8 @@ def formatResult(result):
 if __name__ == '__main__':
     num_keys = 0 #number of keys in our key-value store
     #app.config['JSON_SORT_KEYS'] = False
-    # threading = threading.Thread(target=gossip)
-    # threading.start()
+    threading = threading.Thread(target=gossip)
+    threading.start()
     #second thread to handle the view sync? -- try in regular gossip -> try here if it is too laggy
     # threading2 = threading.Thread(target=gossip2)
     # threading2.start()
