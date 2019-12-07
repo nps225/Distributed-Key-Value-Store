@@ -38,13 +38,25 @@ class Store:
    #        technically server should stop errors before it is even placed
    #        in key value store
    # this function should be implemented for updates as well
-   def upsertValue(self, key, value,clock):
+   def upsertValue(self, key, value,newClock):
       # check to see if key exists
       exists = key in self.dict
       # place the value/new value
       if not exists:
          self.dict[key] = value
-      return exists
+         self.clock[key] = newClock
+         return exists,newClock
+      else: #must exist
+         currentClock = self.clock[key]
+         e = Clock.compareClocksPUT(currentClock,newClock)
+         if e:
+            clock3 = Clock.maxClock(currentClock,newClock)
+            return 404,clock3
+         else:
+            self.dict[key] = value
+            clock3 = Clock.maxClock(currentClock,newClock)
+            return exists,clock3
+
 
    # Grabs the vector clock
    def upsertVC(self, key, clock):

@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, redirect,make_response
 import logging
 import requests
 from KeyValueStore.store import Store
-from VectorClock.vectorClock import VectorClock
+import VectorClock.vectorClock as Clock
 from Hash.hash import Hash
 import json
 import time
@@ -34,7 +34,7 @@ address = os.getenv("ADDRESS")
 h = Hash()# you can check which shard you are in + it will return you a forwarding address if needed
 
 #init our VC
-vc = VectorClock()
+
 clock = 0
 #UPSERT
 @app.route('/kv-store/keys/<key>', methods=['PUT'])
@@ -71,15 +71,19 @@ def upsertKey(key):
             clock = clock + 1
             value = data["value"]  # value
             causal = data["causal-context"]
-            res = store.upsertValue(key, value)
+            Clock.updateClock(causal,clock)
+            res,clock3 = store.upsertValue(key, value, causal)
+            # if(res == 404):
+            #     return make_response({"causal-context":clock3}),404
+
             if(not res):
                 #no previous value exists -> handled easily
-                h.incCount()
+                # h.incCount()
                 response = {
                     "message":'Added successfully',
                     "replaced":res,
                     "address":address,
-                    "causal-context":{}
+                    "causal-context":clock3
                 }
                 return make_response(response),201
 
@@ -89,7 +93,7 @@ def upsertKey(key):
                     "message":'Update successfully',
                     "replaced":res,
                     "address":address,
-                    "causal-context":{}
+                    "causal-context":clock3
                 }
                 return make_response(response),200
 
@@ -113,7 +117,7 @@ def upsertKey(key):
                         "message":a["message"],
                         "replaced":a["replaced"],
                         "address":y,
-                        "causal-context":{}
+                        "causal-context":a["causal-context"]
                     }
                     return make_response(response),b
                 except:  # return that main is down
@@ -124,7 +128,7 @@ def upsertKey(key):
                         "error":"instance is down",
                         "message":"Error in PUT",
                         "address":addresses,
-                        "causal-context":{}
+                        "causal-context":causal
             }
             return make_response(response), 503
 
@@ -194,10 +198,7 @@ def getStore():
     temp = {
         "message": "Key count retrieved successfully",
         "values":values,
-        "vectors":vectors,
-        "timestamps":timestamps,
-        "VectorClock":vc.getClock().copy(),
-        "Timestamp":vc.getTimeStamp()
+        "vectors":vectors
         }
     return make_response(temp),200
 
@@ -206,9 +207,8 @@ def getStore():
 def getView():
     # values,vectors,timestamps = store.returnTablesDict()
     temp = {
-        "VectorClock":vc.getClock().copy(),
-        "View":os.getenv("VIEW"),
-        "REPL":os.getenv("REPL_FACTOR")
+            "View":os.getenv("VIEW"),
+            "REPL":os.getenv("REPL_FACTOR")
         }
     return make_response(temp),200
 
@@ -323,9 +323,7 @@ def viewChangeForward():
 def reshardInsert(key):
     data = request.get_json()
     if(address in h.checkHash(key)):
-        res = store.upsertValue(key, data["value"])
-        store.upsertVC(key,data["causal-context"]["VectorClock"])
-        store.upsertTimestamp(key,data["causal-context"]["Timestamp"]) 
+        res = store.upsertValue(key, data["value"],data["causal-context"])
     return make_response({"value":res},200)
 
 
@@ -344,7 +342,7 @@ def reshard(kv,vc,ts):
                 h.decCount()
                 url = 'http://' + addresses[0] + '/kv-store/view-change/' + key
                 temp = (formatResult(requests.put(url,timeout=2, headers={
-                            'Content-Type': 'application/json'}, json={"value":"test","causal-context":{"VectorClock":b.get(key),"Timestamp":c.get(key)}})))
+                            'Content-Type': 'application/json'}, json={"value":"test","causal-context":data["causal-context"]})))
             except:
                 pass
                 
@@ -368,12 +366,8 @@ def gossip():
                     temp = (formatResult(requests.get(url,timeout=2, headers={
                     'Content-Type': 'application/json'})))
                     res,b = temp
-                    print(res["values"],res["vectors"],flush=True)
                     store.comparison(res["values"],res["vectors"],res["timestamps"])
                     #now update our vector clock with the correct values
-                    tempVC = VectorClock()
-                    tempVC.assignClock(res["VectorClock"])
-                    vc.compClock(tempVC)
                     # res, b = temp
                 except:
                     print("something bad happened and weeeee don't care!!!")
@@ -387,10 +381,6 @@ def gossip():
                     'Content-Type': 'application/json'})))
                     res,b = temp
                     #now update our vector clock with the correct values
-                    tempVC = VectorClock()
-                    tempVC.assignClock(res["VectorClock"])
-                    vc.compClock(tempVC)
-                    print(vc.getClock())
                     # res, b = temp
                 except:
                     print("kinda bad happened!!!")
