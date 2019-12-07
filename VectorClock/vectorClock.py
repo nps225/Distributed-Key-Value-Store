@@ -15,18 +15,28 @@ def compareClocksPUT(clock1, clock2):
       clock2Win += 1
     elif(clock2Val == None):
       clock1Win += 1
+      
     elif(clock1Val > clock2Val):
       clock1Win += 1
     elif(clock1Val < clock2Val):
       clock2Win += 1
   #now lets figure out which clock should win
-  if(clock1Win == clock2Win or (clock1Win > 0 and clock2Win > 0)):
+  if(clock1Win == clock2Win):
+        # if(clock1Win == clock2Win or (clock1Win > 0 and clock2Win > 0)):
     if(clock1["ts"] > clock2["ts"]):
+      clock2Win += 1
       return True
     else:
-      return False
-  elif(clock1Win == 0):
+        # print("NIKHIL LIKES DAIRY")
+        clock2Win += 1
+        return False
+# no wins are detected for clock wins
+  elif(clock1Win<clock2Win):
+    print("NIKHIL LIKES cheese ")
+    print(l)
+    print(clock1Win, clock2Win, "HAMMMONNNNNDDDDD, WHERE IS THE TIME?")
     return False
+    # clocks not the same
   else:#clock2Win == 0"
     return True
 
