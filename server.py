@@ -135,6 +135,7 @@ def upsertKey(key):
 # GET KEY IMPLEMENTATION
 @app.route('/kv-store/keys/<key>', methods=['GET'])
 def getKey(key):
+    data = request.get_json()
     addresses = h.checkHash(key)
     if address in addresses:
         exists, val, code = store.getValue(key)
@@ -181,13 +182,14 @@ def getKey(key):
 #Key-Count
 @app.route('/kv-store/key-count', methods=['GET'])
 def keyCount():
+    data = request.get_json()
     count = len(store.returnStore())
     addresses = h.getShard()
     temp = {
             "message": "Key count retrieved successfully",
             "key-count":count,
             "shard-id":str(int(h.shard_id) + 1),
-            "causal-context":{}
+            "causal-context":data["causal-context"]
         }
     return make_response(temp),200
 
@@ -250,9 +252,10 @@ def getShardId(id):
 
 @app.route('/kv-store/shards',methods=['GET'])
 def getShard():
+    data = request.get_json()
     response = {}
     response["message"] = "Shard membership retrieved successfully"
-    response["causal-context"] = {}
+    response["causal-context"] = data["causal-context"]
     response["shards"] = []
     numOfShard = int(len(h.getView())/int(os.getenv("REPL_FACTOR")))
     for i in range(1,numOfShard+1):

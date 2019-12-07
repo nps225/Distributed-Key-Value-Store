@@ -30,6 +30,13 @@ def simpleGET(port,value,data):
 #    print(b)
    return a.get("causal-context")
 
+def simpleViewChange(port,data):
+   url = "http://localhost:"+ str(port) +"/kv-store/view-change"
+   temp = temp = (formatResult(requests.put(url, headers={
+                'Content-Type': 'application/json'}, json=data)))
+   a,b = temp
+
+   return a,b
 #helper function
 def formatResult(result):
     status_code = result.status_code
@@ -41,8 +48,6 @@ def formatResult(result):
 
     else:
         result = {"status_code": status_code}
-
-
     return result, status_code
 
 
@@ -62,4 +67,6 @@ print(c1)
 data = {"value":"this should work","causal-context":c1}
 c1 = simplePUT(13803,"d",data)
 print(c1)
-
+view = {"view": ["10.10.0.2:13800","10.10.0.3:13800","10.10.0.4:13800","10.10.0.5:13800","10.10.0.6:13800","10.10.0.7:13800"],"repl-factor": 1,"causal-context":c1}
+c1 = simpleViewChange(13805,view)
+print(c1)
