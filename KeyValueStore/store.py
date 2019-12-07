@@ -100,7 +100,6 @@ class Store:
       exists = key in self.dict
       if(exists):
          self.dict.pop(key)
-         self.timestamps.pop(key)
          self.clock.pop(key)
          return exists
       # if dne -- stop here
@@ -142,11 +141,9 @@ class Store:
                      #check first if the value exists
                      #if not we must add it in
                      if(self.dict.get(i) == None):
-                           print("here")
                            self.dict[i] = value
                            self.clock[i] = clock.get(i)
                      else:
-                           print("hi")
                            #values are different -> compare vector clocks
                            clock1 = self.clock.get(i)
                            clock2 = clock.get(i)

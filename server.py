@@ -294,7 +294,7 @@ def viewChange():
     response["message"] = "View change successful",
     response["causal-context"] = data["causal-context"]
     response["shards"] : []
-    numOfShards = len(h.getView())/os.getenv("REPL_FACTOR")
+    numOfShards = len(h.getView())/int(os.getenv("REPL_FACTOR"))
     #return shards
 
     # data["count"] = count
