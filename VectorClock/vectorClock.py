@@ -5,22 +5,39 @@ def compareClocksPUT(clock1, clock2):
   clock1Win = 0
   clock2Win = 0
   l = list(set(clock1.keys()) | set(clock2.keys()))
+  
   #take away the timestamp from our list
   l.remove("ts")
+  print(l)
   for i in l:
+    print('i is at: ', i)
     clock1Val = clock1.get(i)
+    print(clock1Val)
     clock2Val = clock2.get(i)
+    print(clock2Val)
     #now check if any values are none
     if(clock1Val == None):
       clock2Win += 1
+      print(clock2Win, " 2 won!")
     elif(clock2Val == None):
       clock1Win += 1
+      print(clock1Win, " 1 won!")
     elif(clock1Val > clock2Val):
       clock1Win += 1
+      print(clock1Win, " 1 won!")
     elif(clock1Val < clock2Val):
       clock2Win += 1
+      print(clock2Val, " 2 won!")
+    else:
+      if clock1['ts'] > clock2['ts']:
+        clock1Win +=1
+        print(clock1Win, ' 1 won!')
+      elif clock1['ts'] < clock2['ts']:
+        clock2Win +=1
+        print(clock2Win, ' 2 won!')
   #now lets figure out which clock should win
-  if(clock1Win == clock2Win or (clock1Win > 0 and clock2Win > 0)):
+  print(clock1Win, clock2Win, ' final results')
+  if(clock1Win == clock2Win):
     if(clock1["ts"] > clock2["ts"]):
       return True
     else:
