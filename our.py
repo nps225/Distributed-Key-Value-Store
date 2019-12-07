@@ -10,15 +10,15 @@ c2 = {}
 
 
 
-#PUT REQUEST
-def simplePUT(port,value,data):
-   url = "http://localhost:"+ str(port) +"/kv-store/keys/" + value
-   temp = temp = (formatResult(requests.put(url, headers={
-                'Content-Type': 'application/json'}, json=data)))
-   a,b = temp
-#    print(a)
-#    print(b)
-   return a.get("causal-context")
+# #PUT REQUEST
+# def simplePUT(port,value,data):
+#    url = "http://localhost:"+ str(port) +"/kv-store/keys/" + value
+#    temp = temp = (formatResult(requests.put(url, headers={
+#                 'Content-Type': 'application/json'}, json=data)))
+#    a,b = temp
+# #    print(a)
+# #    print(b)
+#    return a.get("causal-context")
 
 #GET REQUEST
 def simpleGET(port,value,data):
@@ -46,13 +46,18 @@ def formatResult(result):
     return result, status_code
 
 
-##HERE IS WHERE OUR TESTS WILL GO
-data = {"value":"2","causal-context":c1}
-c1 = simplePUT(13802,"a",data)
-print(c1)
-data = {"value":"1","causal-context":c1}
-c1 = simplePUT(13802,"b",data)
-print(c1)
-data = {"value":"1","causal-context":c1}
-c1 = simplePUT(13802,"a",data)
+# ##HERE IS WHERE OUR TESTS WILL GO
+# data = {"value":"2","causal-context":c1}
+# c1 = simplePUT(13802,"a",data)
+# print(c1)
+# data = {"value":"1","causal-context":c1}
+# c1 = simplePUT(13802,"b",data)
+# print(c1)
+# data = {"value":"1","causal-context":c1}
+# c1 = simplePUT(13802,"a",data)
+# print(c1)
+
+data = {"value": "2", "causal-context":{'10.10.0.2:13800': 2, '10.10.0.4:13800': 4, 'ts': 1575705669.341587}}
+
+c1 = simpleGET(13802, "b", data)
 print(c1)

@@ -135,6 +135,8 @@ def upsertKey(key):
 # GET KEY IMPLEMENTATION
 @app.route('/kv-store/keys/<key>', methods=['GET'])
 def getKey(key):
+    data = request.get_json()
+    causal = data.get("causal-context")
     addresses = h.checkHash(key)
     if address in addresses:
         exists, val, code = store.getValue(key)
@@ -144,7 +146,7 @@ def getKey(key):
                 "message":"Retrieved successfully",
                 "value":val,
                 "address":address,
-                "causal-context":{}
+                "causal-context":{causal}
             }
             return make_response(response), code
         else:
@@ -153,7 +155,7 @@ def getKey(key):
                 "error":"Key does not exist",
                 "message":val,
                 "address":address,
-                "causal-context":{}
+                "causal-context":{causal}
             }
             return make_response(response),code
     else:
@@ -164,7 +166,7 @@ def getKey(key):
         # now let's grab make our request
         try:
             temp = (formatResult(requests.get(url= url,timeout=2, headers={
-                'Content-Type': 'application/json'})))
+                'Content-Type': 'application/json'}, data=data)))
             a,b = temp
             # a.update({"address":y})
             #dont for get causal-context here
@@ -174,47 +176,57 @@ def getKey(key):
                 "error":"Main instance is down",
                 "message":"Error in GET",
                 "address":y,
-                "causal-context":{}
+                "causal-context":{causal}
             }
             return make_response(response), 503
 
 #Key-Count
 @app.route('/kv-store/key-count', methods=['GET'])
 def keyCount():
+    data = request.get_json()
+    causal = data["causal-context"]
     count = len(store.returnStore())
     addresses = h.getShard()
     temp = {
             "message": "Key count retrieved successfully",
             "key-count":count,
             "shard-id":str(int(h.shard_id) + 1),
-            "causal-context":{}
+            "causal-context":{causal}
         }
     return make_response(temp),200
 
 #return entire store
 @app.route('/kv-store/table', methods=['GET'])
 def getStore():
+    data = request.get_json()
+    causal = data["causal-context"]
     values,vectors,timestamps = store.returnTablesDict()
     temp = {
         "message": "Key count retrieved successfully",
         "values":values,
-        "vectors":vectors
+        "vectors":vectors,
+        "causal-context":{causal}
         }
     return make_response(temp),200
 
 
 @app.route('/kv-store/view', methods=['GET'])#for now this just returns my vector clock
 def getView():
+    data = request.get_json()
+    causal = data["causal-context"]
     # values,vectors,timestamps = store.returnTablesDict()
     temp = {
             "View":os.getenv("VIEW"),
-            "REPL":os.getenv("REPL_FACTOR")
+            "REPL":os.getenv("REPL_FACTOR"),
+            "causal-context": causal
         }
     return make_response(temp),200
 
 
 @app.route('/kv-store/shards/<id>',methods=['GET'])
 def getShardId(id):
+    data = request.get_json()
+    causal = data["causal-context"]
     val = h.getView().copy()
     repl = os.getenv("REPL_FACTOR")
     shardAddresses = val[(((int(id) - 1) * int(repl))):(((((int(id) - 1) * int(repl))  + int(repl))))]
@@ -226,7 +238,7 @@ def getShardId(id):
             # now let's grab make our request
             try:
                 temp = (formatResult(requests.get(url= url,timeout=2, headers={
-                    'Content-Type': 'application/json'})))
+                    'Content-Type': 'application/json'}, data=data)))
                 a,b = temp
                 return make_response(a),b
             except:
@@ -240,15 +252,17 @@ def getShardId(id):
             "shard-id":id,
             "replicas":shardAddresses,
             "key-count":len(store.dict),
-            "causal-context":{}
+            "causal-context":{causal}
         }
         return make_response(response),200
 
 @app.route('/kv-store/shards',methods=['GET'])
 def getShard():
+    data = request.get_json()
+    causal = data["causal-context"]
     response = {}
     response["message"] = "Shard membership retrieved successfully"
-    response["causal-context"] = {}
+    response["causal-context"] = {causal}
     response["shards"] = []
     numOfShard = int(len(h.getView())/int(os.getenv("REPL_FACTOR")))
     for i in range(1,numOfShard+1):
