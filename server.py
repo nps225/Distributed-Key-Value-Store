@@ -73,8 +73,14 @@ def upsertKey(key):
             causal = data["causal-context"]
             Clock.updateClock(causal,clock)
             res,clock3 = store.upsertValue(key, value, causal)
-            # if(res == 404):
-            #     return make_response({"causal-context":clock3}),404
+            if(res == 503):
+                response = {
+                   "causal-context":clock3,
+                   "error":"Unable to satisfy request",
+                   "message":"Error in GET",
+                   "address":address
+                }
+                return make_response({"causal-context":clock3}),404
 
             if(not res):
                 #no previous value exists -> handled easily
@@ -127,7 +133,7 @@ def upsertKey(key):
             response =  {
                         "error":"instance is down",
                         "message":"Error in PUT",
-                        "address":addresses,
+                        "address":y,
                         "causal-context":causal
             }
             return make_response(response), 503
@@ -135,49 +141,71 @@ def upsertKey(key):
 # GET KEY IMPLEMENTATION
 @app.route('/kv-store/keys/<key>', methods=['GET'])
 def getKey(key):
+    global store
     data = request.get_json()
     addresses = h.checkHash(key)
+    causal = data.get("causal-context")
+    addresses = h.checkHash(key)
     if address in addresses:
-        exists, val, code = store.getValue(key)
+        # almost forgot to check the clock lol
+        exists, val, code = store.getValue(key, causal)
+
+        # well if the context is not there
+        if (code == 503):
+            response = {
+                "doesExist":exists,
+                "error":"Unable to satisfy request",
+                "value":val,
+                "address":address,
+                "causal-context":causal
+            }
+            return make_response(response), code
+
+
         if(exists):
             response = {
                 "doesExist":exists,
                 "message":"Retrieved successfully",
                 "value":val,
                 "address":address,
-                "causal-context":{}
+                "causal-context":causal
             }
             return make_response(response), code
+            
         else:
             response = {
                 "doesExist":exists,
                 "error":"Key does not exist",
                 "message":val,
                 "address":address,
-                "causal-context":{}
+                "causal-context":causal
             }
             return make_response(response),code
     else:
         #handle if a node is down
         #this means we need to forward our request
-        y = addresses[0]
-        url = 'http://' + y + '/kv-store/keys/' + key
-        # now let's grab make our request
-        try:
-            temp = (formatResult(requests.get(url= url,timeout=2, headers={
-                'Content-Type': 'application/json'})))
-            a,b = temp
-            # a.update({"address":y})
-            #dont for get causal-context here
-            return make_response(a),b
-        except:
-            response = {
-                "error":"Main instance is down",
-                "message":"Error in GET",
-                "address":y,
-                "causal-context":{}
-            }
-            return make_response(response), 503
+        for addr in addresses:
+            y = addr
+            url = 'http://' + y + '/kv-store/keys/' + key
+            # now let's grab make our request
+            try:
+                temp = (formatResult(requests.get(url= url,timeout=2, headers={
+                    'Content-Type': 'application/json'}, json=data)))
+                a,b = temp
+                # a.update({"address":data["address"]})
+                #dont for get causal-context here
+                return make_response(a),b
+            except:
+                pass
+            time.sleep(1)
+
+        response = {
+            "error":"Main instance is down",
+            "message":"Error in GET",
+            "address":y,
+            "causal-context":data["causal-context"]
+        }
+        return make_response(response), 503
 
 #Key-Count
 @app.route('/kv-store/key-count', methods=['GET'])

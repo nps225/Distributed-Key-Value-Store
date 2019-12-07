@@ -31,6 +31,19 @@ def compareClocksPUT(clock1, clock2):
     return True
 
 
+def compareClocksGET(clock1,clock2,value):
+  for i in clock2.keys():
+    clock1Val = clock1.get(i)
+    clock2Val = clock2.get(i)
+    if(clock1Val != None and clock2Val != None):
+      if(clock2Val < clock1Val):
+        value = "Error in GET"
+        code = 503
+        return (value,code)
+  code = 200
+  return value,code
+
+
 def updateClock(clock,value):
   address = os.getenv("ADDRESS")
   clock[address] = value

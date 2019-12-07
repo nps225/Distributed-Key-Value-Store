@@ -51,7 +51,7 @@ class Store:
          e = Clock.compareClocksPUT(currentClock,newClock)
          if e:
             clock3 = Clock.maxClock(currentClock,newClock)
-            return 404,clock3
+            return 503,clock3
          else:
             self.dict[key] = value
             clock3 = Clock.maxClock(currentClock,newClock)
@@ -77,12 +77,12 @@ class Store:
    # a = false
    # b = "Key does not exist"
    # c = 404
-   def getValue(self, key):
+   def getValue(self, key, newClock):
       exists = key in self.dict
       # if it is present
       if(exists):
-         code = 200
-         value = self.dict[key]
+         value = self.dict.get(key)
+         value, code = Clock.compareClocksGET(self.clock[key],newClock,value)
       else:
          # if it isn't present
          code = 404
