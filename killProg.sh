@@ -1,3 +1,4 @@
+docker kill node1 node2 node3 node4 node5 node6
 docker stop node1 
 docker rm node1
 docker stop node2

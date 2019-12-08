@@ -54,19 +54,19 @@ def formatResult(result):
 ##HERE IS WHERE OUR TESTS WILL GO
 data = {"value":"2","causal-context":c1}
 c1 = simplePUT(13802,"a",data)
-print(c1)
+# print(c1)
 data = {"value":"1","causal-context":c1}
-c1 = simplePUT(13802,"b",data)
-print(c1)
-data = {"value":"1000000","causal-context":c1}
-c1 = simplePUT(13804,"a",data)
-print(c1)
-data = {"value":"works","causal-context":c1}
-c1 = simplePUT(13802,"c",data)
-print(c1)
-data = {"value":"this should work","causal-context":c1}
-c1 = simplePUT(13803,"d",data)
-print(c1)
-view = {"view": ["10.10.0.2:13800","10.10.0.3:13800","10.10.0.4:13800","10.10.0.5:13800","10.10.0.6:13800","10.10.0.7:13800"],"repl-factor": 1,"causal-context":c1}
-c1 = simpleViewChange(13805,view)
-print(c1)
+c1 = simplePUT(13805,"c",data)
+# print(c1)
+# data = {"value":"1000000","causal-context":c1}
+# c1 = simplePUT(13804,"a",data)
+# print(c1)
+# data = {"value":"works","causal-context":c1}
+# c1 = simplePUT(13802,"c",data)
+# print(c1)
+# data = {"value":"this should work","causal-context":c1}
+# c1 = simplePUT(13803,"d",data)
+# print(c1)
+# view = {"view": ["10.10.0.2:13800","10.10.0.3:13800","10.10.0.4:13800","10.10.0.5:13800","10.10.0.6:13800","10.10.0.7:13800"],"repl-factor": 1,"causal-context":c1}
+# c1 = simpleViewChange(13805,view)
+# print(c1)
