@@ -1,5 +1,4 @@
 cruzid	Description of Contribution
-fasaeed	Worked on and debugged main/follower part
-mjpon	Worked on and debugged main/follower part
-npsheth	Worked on making key store,debugging the first REST stuff and helped with main/follower
-gvquach	Worked on REST andhelped a little with main/follwer
+fasaeed	Worked on causality, vector clocks, debugging and testing
+mjpon	Worked on the get logic for keys for causality and assisted with causality context
+npsheth	Worked on fixing reshard, new key counts, partitions, replication, gossip protocal
