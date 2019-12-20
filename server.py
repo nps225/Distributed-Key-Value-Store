@@ -176,7 +176,7 @@ def getKey(key):
             response = {
                 "doesExist":exists,
                 "error":"Key does not exist",
-                "message":val,
+                "message":"Error in GET",
                 "address":address,
                 "causal-context":causal
             }
