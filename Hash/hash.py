@@ -5,6 +5,7 @@ class Hash:
    # (ascii value) % n (where n is the number of computers)
    def __init__(self):
       self.count = 0
+      self.shard_id = str(int((os.getenv("VIEW").replace("\"","").split(",").index(os.getenv("ADDRESS")))/int(os.getenv("REPL_FACTOR"))))
    
    # check the hash if its in use
    def checkHash(self,key):
@@ -12,6 +13,7 @@ class Hash:
       view = os.getenv("VIEW").split(",")
       #obtain our nodes address
       address = os.getenv("ADDRESS")
+      replication = int(os.getenv("REPL_FACTOR"))#gets the number of replicas that are present
       
       #obtain our shard - we get a check of a new hash everytime by getting the
       # value and the hashing it, then divide by the current view length
@@ -19,17 +21,23 @@ class Hash:
       # only reshards when we have a viewChange with the modulo
       val_ascii = sum([ord(c) for c in key])
       # shard = (val_ascii).encode().hex() % (len(view))
-      shard = (val_ascii) % (len(view))
+      #we are going to check
+      shard = int((val_ascii) % (len(view)/replication))
+      addresses = []
+      for i in range(replication):
+         addresses.append(view[shard * replication + i].replace("\"",""))
+   
+      return addresses
+   
+   def getShard(self):
+     self.shard_id = str(int((os.getenv("VIEW").replace("\"","").split(",").index(os.getenv("ADDRESS")))/int(os.getenv("REPL_FACTOR"))))
+     f = int(self.shard_id)
+     rep = int(os.getenv("REPL_FACTOR"))
+     index = f * rep
+     shard = os.getenv("VIEW").replace("\"","").split(",")[index:index+rep]
+     return shard
+
       
-      
-      # this is where we get the address of direction below
-      #now compare the current address with the address at location in list
-      shard_address = view[shard].replace("\"","")#!!!!! may need to remove in actual testing
-      #if the address is the same as our shard address
-      if(address == shard_address):
-         return (True,address)
-      else:#if not forward to the desired address
-         return (False,shard_address)
 
    # increasing the count of shards/the items that go into the nodes
    def incCount(self):
@@ -59,3 +67,7 @@ class Hash:
       # assume the views are not wrong and durable from the user
       os.environ["VIEW"] = updateView
       return os.environ["VIEW"].split(",")
+
+   def updateReplicationFactor(self,updateFactor):
+      os.environ["REPL_FACTOR"] = updateFactor
+      return os.environ["REPL_FACTOR"]

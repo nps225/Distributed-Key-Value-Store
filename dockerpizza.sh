@@ -34,7 +34,7 @@ curl --request   PUT                                 \
      --header    "Content-Type: application/json"    \
      --data      '{"value": "sampleValue"}'          \
      --write-out "%{http_code}\n"                    \
-     http://${addr2}/kv-store/keys/sampleKey
+     http://10.10.0.2:13800/kv-store/keys/sampleKey
 
 
 <<'expected_response'
